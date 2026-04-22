@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Opera Tab Saver Pro",
+  "version": "2.0.0",
+  "description": "Save all Opera tabs as a managed HTML backup with search, read/unread, remove, and legacy HTML import support.",
+  "permissions": [
+    "tabs",
+    "downloads"
+  ],
+  "action": {
+    "default_title": "Opera Tab Saver Pro",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

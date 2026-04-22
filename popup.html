@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Opera Tab Saver Pro</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <h1>Opera Tab Saver Pro</h1>
+    <p class="desc">
+      備份目前 Opera 所有分頁成「可管理版 HTML」，也可匯入舊版 tabs_backup.html 轉成新版。
+    </p>
+
+    <div class="section">
+      <button id="saveManagedBtn" class="primary">備份全部分頁成可管理版 HTML</button>
+      <label class="checkbox-row">
+        <input type="checkbox" id="closeTabsAfterSave" />
+        備份後關閉一般網頁分頁
+      </label>
+    </div>
+
+    <div class="section">
+      <label class="file-label">匯入舊版第一版 tabs_backup.html</label>
+      <input type="file" id="legacyFileInput" accept=".html,.htm" />
+      <button id="convertLegacyBtn">轉成新版可管理版 HTML</button>
+    </div>
+
+    <div id="status" class="status">等待操作</div>
+
+    <div class="note">
+      <strong>說明：</strong><br />
+      1. 新備份：直接輸出可管理版 HTML。<br />
+      2. 舊備份：選舊的第一版 tabs_backup.html，再按轉檔。<br />
+      3. 輸出後直接用 Opera 打開即可管理。
+    </div>
+  </div>
+
+  <script src="template_manager.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

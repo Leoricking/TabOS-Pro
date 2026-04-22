@@ -1,0 +1,40 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Temporary / backup
+*.tmp
+*.temp
+*.bak
+*.old
+
+# Node / package managers (如果之後有加工具鏈可直接沿用)
+node_modules/
+dist/
+build/
+
+# Python (如果未來加轉檔腳本)
+__pycache__/
+*.pyc
+
+# Local test files
+test_output/
+sandbox/
+
+# Optional: 不想把示範影片放上 Git 就打開下面這行
+# demo/*.mp4
+
+# Optional: 不想把示範圖片放上 Git 就打開下面這行
+# demo/*.JPG
+# demo/*.jpg
+# demo/*.png
