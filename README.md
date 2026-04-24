@@ -45,12 +45,121 @@ Lightweight Opera Extension — Backup browser tabs into a manageable HTML page 
 
 📂 Project Structure
 ```
-opera_tab_saver/
-├── background.js         # Extension background logic
-├── manifest.json         # Extension manifest
-├── popup.html/js         # Extension popup UI & logic
-├── tabs_manager_importer.html # Main management & import UI
-└── template_manager.js    # Data processing & template logic
+- Backup all current browser tabs into a managed HTML file
+- Import old `tabs_backup.html`
+- Import existing managed HTML
+- Merge existing managed HTML with currently opened browser tabs
+- Auto deduplicate URLs
+- Remove common tracking parameters
+- Auto categorize tabs:
+  - AI
+  - YouTube
+  - Shopping
+  - Work
+  - Social
+  - Maps / Navigation
+  - Other
+- Preserve read / unread state
+- Mark each link as:
+  - 待看
+  - 重要
+  - 工作
+  - 深度閱讀
+- Set priority:
+  - P1
+  - P2
+  - P3
+- Add custom tags
+- Search by title, URL, category, status, priority, or tag
+- Filter by category
+- Show filtered statistics
+- Batch group actions:
+  - Mark all as read
+  - Mark all as unread
+  - Open unread links in group
+  - Delete read links in group
+- Export cleaned managed HTML
+- Compact horizontal UI for better readability
+
+### Worklog Manager
+
+Convert `工作日誌.txt` or `command.txt` into a clean searchable HTML knowledge base.
+
+Features:
+
+- Date timeline
+- Date sorting:
+  - Newest first
+  - Oldest first
+- Search
+- Category filtering
+- Command highlighting
+- TODO extraction
+- IP highlighting
+- Statistics
+- Edit log item content
+- Edit date
+- Edit category
+- Toggle command / TODO
+- Export modified HTML
+
+Detected categories include:
+
+- BIOS
+- BMC
+- RDMA
+- Liqid
+- Network
+- Storage
+- GPU
+- Project
+- Travel / Expense
+- Command
+- General
+
+---
+
+## Supported Browsers
+
+Supported:
+
+- Opera
+- Google Chrome
+- Microsoft Edge
+- Brave
+- Vivaldi
+
+Not guaranteed:
+
+- Firefox
+- Safari
+
+Reason: this project uses Chromium Extension Manifest V3 APIs.
+
+---
+
+## Project Structure
+
+```text
+opera-tabs-manager/
+├── .gitignore
+├── README.md
+├── How to use.txt
+├── run_worklog.bat
+├── extension/
+│   ├── manifest.json
+│   ├── background.js
+│   ├── popup.html
+│   ├── popup.css
+│   ├── popup.js
+│   ├── merge_engine.js
+│   └── template_manager.js
+├── tools/
+│   ├── worklog_parser.py
+│   └── html_generator.py
+├── demo/
+├── icons/
+└── output/
 ```
 
 🧪 如何使用 / How to Use
