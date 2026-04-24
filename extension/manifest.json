@@ -1,0 +1,20 @@
+{
+    "manifest_version": 3,
+    "name": "TabOS - Browser Tabs Manager",
+    "version": "1.0.0",
+    "description": "Backup, merge, categorize, deduplicate, and manage browser tabs as a personal knowledge OS.",
+    "permissions": [
+      "tabs",
+      "downloads"
+    ],
+    "host_permissions": [
+      "<all_urls>"
+    ],
+    "action": {
+      "default_title": "TabOS",
+      "default_popup": "popup.html"
+    },
+    "background": {
+      "service_worker": "background.js"
+    }
+  }
