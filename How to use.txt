@@ -1,5 +1,5 @@
 ==========================================
-TabOS Pro 使用說明（最終版）
+Tabs Manager Pro 使用說明（最終版）
 ==========================================
 
 👉 核心目標：
@@ -41,7 +41,7 @@ edge://extensions
 
 輸出：
 
-tabos_pro_tabs_YYYY-MM-DD.html
+tabs_manager_pro_tabs_YYYY-MM-DD.html
 
 👉 用瀏覽器打開即可開始管理
 

@@ -56,8 +56,8 @@
   }
 
   function buildManagedHtml(groups, options = {}) {
-    const title = options.title || "TabOS Pro Managed Tabs";
-    const storageKey = options.storageKey || "tabos_pro_tabs_" + Date.now();
+    const title = options.title || "Tabs Manager Pro Managed Tabs";
+    const storageKey = options.storageKey || "tabs_manager_pro_tabs_" + Date.now();
     const safeData = JSON.stringify(groups).replace(/<\/script/gi, "<\\/script");
 
     return `<!DOCTYPE html>
@@ -593,7 +593,7 @@ function exportHtml() {
 
   a.href = url;
   a.download =
-    "tabos_pro_export_" +
+    "tabs_manager_pro_export_" +
     now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) + "_" +
     pad(now.getHours()) + "-" + pad(now.getMinutes()) + "-" + pad(now.getSeconds()) +
     ".html";

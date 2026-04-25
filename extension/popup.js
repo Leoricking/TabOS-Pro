@@ -75,11 +75,11 @@ async function backupCurrentTabs() {
     const groups = TabOSMergeEngine.groupItems(items);
 
     const html = TabOSTemplateManager.buildManagedHtml(groups, {
-      title: "TabOS Pro Managed Tabs",
-      storageKey: "tabos_pro_tabs_" + Date.now()
+      title: "Tabs Manager Pro Managed Tabs",
+      storageKey: "tabs_manager_pro_tabs_" + Date.now()
     });
 
-    downloadHtml(html, "tabos_pro_tabs");
+    downloadHtml(html, "tabs_manager_pro_tabs");
 
     if (closeAfter) {
       const count = await closeNormalTabs();
@@ -119,11 +119,11 @@ async function mergeWithCurrentTabs() {
     const mergedGroups = TabOSMergeEngine.groupItems(mergedItems);
 
     const html = TabOSTemplateManager.buildManagedHtml(mergedGroups, {
-      title: "TabOS Pro Merged Tabs",
-      storageKey: "tabos_pro_merged_" + Date.now()
+      title: "Tabs Manager Pro Merged Tabs",
+      storageKey: "tabs_manager_pro_merged_" + Date.now()
     });
 
-    downloadHtml(html, "tabos_pro_merged_tabs");
+    downloadHtml(html, "tabs_manager_pro_merged_tabs");
 
     if (closeAfterMerge) {
       setStatus("合併完成，正在關閉目前一般網頁分頁...");
@@ -159,11 +159,11 @@ async function convertOldHtml() {
     const groups = TabOSMergeEngine.groupItems(items);
 
     const html = TabOSTemplateManager.buildManagedHtml(groups, {
-      title: "TabOS Pro Converted Tabs",
-      storageKey: "tabos_pro_converted_" + Date.now()
+      title: "Tabs Manager Pro Converted Tabs",
+      storageKey: "tabs_manager_pro_converted_" + Date.now()
     });
 
-    downloadHtml(html, "tabos_pro_converted_tabs");
+    downloadHtml(html, "tabs_manager_pro_converted_tabs");
     setStatus("完成：已轉成新版可管理 HTML。");
   } catch (error) {
     console.error(error);
