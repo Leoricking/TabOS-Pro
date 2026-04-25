@@ -24,15 +24,28 @@ After
 <img width="2063" height="1242" alt="image" src="https://github.com/user-attachments/assets/23727844-2ecc-4df7-a997-7434d4a4f623" />
 
 
-### 📂 專案結構
+### 📂 專案結構 Project Structure
 ```text
-opera_tab_saver/
-├── manifest.json         # 擴充功能配置
-├── background.js         # 背景邏輯
-├── popup.html/js         # 擴充功能介面與控制
-├── tabs_manager_importer.html # 核心導入與管理介面
-├── template_manager.js    # 數據處理與模板邏輯
-└── styles.css            # 介面樣式
+Tabs-manager-Pro/
+├── extension/
+│   ├── manifest.json
+│   ├── background.js
+│   ├── popup.html
+│   ├── popup.js
+│   ├── merge_engine.js
+│   └── template_manager.js
+│
+├── tools/
+│   ├── worklog_parser.py
+│   └── html_generator.py
+│
+├── output/
+├── demo/
+├── icons/
+│
+├── run_worklog.bat
+├── README.md
+└── How to use.txt
 ```
 
 🇺🇸 English
@@ -51,8 +64,6 @@ Lightweight Opera Extension — Backup browser tabs into a manageable HTML page 
 
 🔍 Efficient Search: Instant filtering by title, URL, or group name.
 
-📂 Project Structure
-```
 - Backup all current browser tabs into a managed HTML file
 - Import old `tabs_backup.html`
 - Import existing managed HTML
@@ -132,34 +143,9 @@ Reason: this project uses Chromium Extension Manifest V3 APIs.
 
 ---
 
-## Project Structure
-
-```text
-Tabs-manager-Pro/
-├── extension/
-│   ├── manifest.json
-│   ├── background.js
-│   ├── popup.html
-│   ├── popup.js
-│   ├── merge_engine.js
-│   └── template_manager.js
-│
-├── tools/
-│   ├── worklog_parser.py
-│   └── html_generator.py
-│
-├── output/
-├── demo/
-├── icons/
-│
-├── run_worklog.bat
-├── README.md
-└── How to use.txt
-```
-
 🧪 使用方式
-1️⃣ 安裝外掛
 
+1️⃣ 安裝外掛
 開啟 Opera 擴充功能頁面，開啟「開發者模式」。
 點擊「載入解壓縮擴充功能」，選取 opera_tab_saver 資料夾。
 extension/
