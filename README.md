@@ -186,8 +186,11 @@ python tools\worklog_parser.py 工作日誌.txt output\worklog.html
 
 👨‍💻 適合族群
 工程師
+
 HPC / Server / Network
+
 AI 使用者
+
 重度分頁使用者
 
 Built with by Rossi Huang
