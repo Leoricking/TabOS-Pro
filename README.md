@@ -21,7 +21,8 @@ Before
 <img width="2036" height="112" alt="image" src="https://github.com/user-attachments/assets/1a4a8844-3926-480c-bd6e-99274e2fb5c7" />
 
 After
-<img width="2078" height="1306" alt="image" src="https://github.com/user-attachments/assets/994cbad4-6925-43fd-a7f4-085e7d8266ef" />
+<img width="2063" height="1242" alt="image" src="https://github.com/user-attachments/assets/23727844-2ecc-4df7-a997-7434d4a4f623" />
+
 
 ### 📂 專案結構
 ```text
