@@ -173,8 +173,19 @@ async function convertOldHtml() {
   }
 }
 
+function openPlanner() {
+  chrome.tabs.create({
+    url: chrome.runtime.getURL("planner/planner.html")
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("backupBtn").addEventListener("click", backupCurrentTabs);
   document.getElementById("mergeBtn").addEventListener("click", mergeWithCurrentTabs);
   document.getElementById("convertBtn").addEventListener("click", convertOldHtml);
+
+  const plannerBtn = document.getElementById("openPlannerBtn");
+  if (plannerBtn) {
+    plannerBtn.addEventListener("click", openPlanner);
+  }
 });

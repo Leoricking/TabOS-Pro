@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tabs Manager Pro Planner</title>
+  <link rel="stylesheet" href="planner.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div>
+        <h1>📅 Tabs Manager Pro Planner</h1>
+        <p>每日行程、待辦、分頁與工作日誌整合中心</p>
+      </div>
+
+      <div class="date-panel">
+        <div class="date-nav">
+          <button id="prevDayBtn">← 前一天</button>
+          <input id="dateInput" type="date" />
+          <button id="todayBtn">今天</button>
+          <button id="nextDayBtn">後一天 →</button>
+        </div>
+
+        <div class="calendar-box">
+          <div class="calendar-head">
+            <button id="prevYearBtn">« 年</button>
+            <button id="prevMonthBtn">← 月</button>
+
+            <select id="yearSelect"></select>
+
+            <select id="monthSelect">
+              <option value="1">1 月</option>
+              <option value="2">2 月</option>
+              <option value="3">3 月</option>
+              <option value="4">4 月</option>
+              <option value="5">5 月</option>
+              <option value="6">6 月</option>
+              <option value="7">7 月</option>
+              <option value="8">8 月</option>
+              <option value="9">9 月</option>
+              <option value="10">10 月</option>
+              <option value="11">11 月</option>
+              <option value="12">12 月</option>
+            </select>
+
+            <button id="nextMonthBtn">月 →</button>
+            <button id="nextYearBtn">年 »</button>
+          </div>
+
+          <div class="calendar-week">
+            <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+          </div>
+
+          <div id="calendarGrid" class="calendar-grid"></div>
+        </div>
+      </div>
+    </header>
+
+    <section class="toolbar">
+      <button id="exportBtn" class="success">匯出 Planner HTML</button>
+      <button id="backupJsonBtn">匯出 JSON</button>
+      <label class="file-btn">
+        匯入 JSON
+        <input id="importJsonInput" type="file" accept=".json" />
+      </label>
+      <button id="clearDayBtn" class="danger">清空本日</button>
+    </section>
+
+    <main class="grid">
+      <section class="card focus-card">
+        <div class="card-head">
+          <h2>📌 今日重點 Top 3</h2>
+          <button id="addFocusBtn">+ 新增</button>
+        </div>
+        <div id="focusList"></div>
+      </section>
+
+      <section class="card stats-card">
+        <h2>📊 今日統計</h2>
+        <div id="stats"></div>
+      </section>
+
+      <section class="card timeline-card">
+        <div class="card-head">
+          <h2>🕒 今日行程</h2>
+          <button id="addScheduleBtn">+ 新增行程</button>
+        </div>
+        <div id="scheduleList"></div>
+      </section>
+
+      <section class="card task-card">
+        <div class="card-head">
+          <h2>📋 待辦事項</h2>
+          <button id="addTaskBtn">+ 新增任務</button>
+        </div>
+
+        <div class="filters">
+          <input id="searchInput" placeholder="搜尋任務、tag、連結、備註..." />
+          <select id="statusFilter">
+            <option value="">全部狀態</option>
+            <option value="todo">待辦</option>
+            <option value="doing">進行中</option>
+            <option value="done">已完成</option>
+          </select>
+          <select id="priorityFilter">
+            <option value="">全部優先級</option>
+            <option value="P1">P1</option>
+            <option value="P2">P2</option>
+            <option value="P3">P3</option>
+          </select>
+        </div>
+
+        <div id="taskList"></div>
+      </section>
+
+      <section class="card tabs-card">
+        <div class="card-head">
+          <h2>🔗 今日關聯 Tabs</h2>
+          <button id="importTabsBtn">從 Tabs HTML 匯入</button>
+        </div>
+        <input id="tabsHtmlInput" type="file" accept=".html,.htm" hidden />
+        <div id="tabsList"></div>
+      </section>
+
+      <section class="card worklog-card">
+        <div class="card-head">
+          <h2>📝 今日 Worklog / TODO</h2>
+          <button id="importWorklogBtn">匯入 Worklog HTML</button>
+        </div>
+        <input id="worklogHtmlInput" type="file" accept=".html,.htm" hidden />
+        <div id="worklogList"></div>
+      </section>
+
+      <section class="card notes-card">
+        <h2>🧠 今日筆記</h2>
+        <textarea id="dailyNotes" placeholder="今日心得、debug 結論、明日提醒..."></textarea>
+      </section>
+    </main>
+  </div>
+
+  <div id="modalMask" class="modal-mask">
+    <div class="modal">
+      <h2 id="modalTitle">編輯</h2>
+
+      <div id="taskEditor" class="editor">
+        <label>任務名稱</label>
+        <input id="taskTitleInput" />
+
+        <div class="two-col">
+          <div>
+            <label>狀態</label>
+            <select id="taskStatusInput">
+              <option value="todo">待辦</option>
+              <option value="doing">進行中</option>
+              <option value="done">已完成</option>
+            </select>
+          </div>
+
+          <div>
+            <label>優先級</label>
+            <select id="taskPriorityInput">
+              <option value="P1">P1</option>
+              <option value="P2">P2</option>
+              <option value="P3">P3</option>
+            </select>
+          </div>
+        </div>
+
+        <label>分類</label>
+        <input id="taskCategoryInput" placeholder="工作 / AI / 投資 / Debug..." />
+
+        <label>Tags（逗號分隔）</label>
+        <input id="taskTagsInput" placeholder="AI, RDMA, urgent" />
+
+        <label>關聯連結 URL</label>
+        <input id="taskUrlInput" placeholder="https://..." />
+
+        <label>備註</label>
+        <textarea id="taskNoteInput"></textarea>
+      </div>
+
+      <div id="scheduleEditor" class="editor">
+        <div class="two-col">
+          <div>
+            <label>開始時間</label>
+            <input id="scheduleStartInput" type="time" />
+          </div>
+          <div>
+            <label>結束時間</label>
+            <input id="scheduleEndInput" type="time" />
+          </div>
+        </div>
+
+        <label>行程內容</label>
+        <input id="scheduleTitleInput" />
+
+        <label>分類</label>
+        <input id="scheduleCategoryInput" placeholder="工作 / 休息 / 學習..." />
+      </div>
+
+      <div id="focusEditor" class="editor">
+        <label>重點內容</label>
+        <input id="focusInput" />
+      </div>
+
+      <div class="modal-actions">
+        <button id="cancelModalBtn">取消</button>
+        <button id="saveModalBtn" class="success">儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="planner.js"></script>
+</body>
+</html>

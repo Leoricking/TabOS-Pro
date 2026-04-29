@@ -1,0 +1,439 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #0f1115;
+  color: #e8e8e8;
+  font-family: Arial, "Microsoft JhengHei", sans-serif;
+}
+
+.app {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 36px;
+  font-weight: 900;
+}
+
+p {
+  margin: 0;
+  color: #a9b1bd;
+}
+
+.date-panel {
+  width: 480px;
+  display: grid;
+  gap: 10px;
+}
+
+.date-nav,
+.toolbar,
+.card-head,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.date-nav input {
+  flex: 1;
+  min-width: 180px;
+}
+
+.calendar-box {
+  background: #171a21;
+  border: 1px solid #252b36;
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.calendar-head {
+  display: grid;
+  grid-template-columns: auto auto 1fr 1fr auto auto;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.calendar-head select {
+  min-width: 90px;
+  height: 40px;
+}
+
+.calendar-week,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.calendar-grid {
+  min-height: 240px;
+}
+
+.calendar-week span {
+  color: #98a4b6;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.day-cell {
+  height: 38px;
+  border-radius: 10px;
+  background: #101319;
+  border: 1px solid #212736;
+  color: #dbe7ff;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.day-cell:hover {
+  background: #2b3342;
+}
+
+.day-cell.today {
+  border-color: #4c7dff;
+}
+
+.day-cell.active {
+  background: #4c7dff;
+}
+
+.day-cell.has-data::after {
+  content: "•";
+  color: #ffb86c;
+  margin-left: 2px;
+}
+
+.day-cell:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.toolbar {
+  background: #171a21;
+  border: 1px solid #252b36;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 18px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.card {
+  background: #171a21;
+  border: 1px solid #252b36;
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.task-card,
+.notes-card {
+  grid-column: span 2;
+}
+
+.card-head {
+  justify-content: space-between;
+}
+
+h2 {
+  color: #ffb86c;
+  margin: 0 0 14px;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+button,
+.file-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: #2b3342;
+  color: white;
+  font-weight: 800;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button:hover,
+.file-btn:hover {
+  opacity: 0.92;
+}
+
+.file-btn input {
+  display: none;
+}
+
+.success {
+  background: #2f9d62;
+}
+
+.primary {
+  background: #4c7dff;
+}
+
+.warn {
+  background: #c78a21;
+}
+
+.danger {
+  background: #d84d4d;
+}
+
+input,
+select,
+textarea {
+  background: #0f1115;
+  color: white;
+  border: 1px solid #353d4c;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  width: 100%;
+}
+
+textarea {
+  min-height: 160px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 180px 160px;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.item {
+  background: #101319;
+  border: 1px solid #212736;
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.item-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.item-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #e8e8e8;
+  word-break: break-word;
+}
+
+.item-title.done {
+  color: #8b949e;
+  text-decoration: line-through;
+}
+
+.item-sub {
+  margin-top: 6px;
+  color: #8f9aad;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.tag {
+  display: inline-flex;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  background: #2a3a58;
+  color: #9fc2ff;
+}
+
+.tag.p1 {
+  background: #6b1f1f;
+  color: #ffd0d0;
+}
+
+.tag.p2 {
+  background: #5b461f;
+  color: #ffe4a3;
+}
+
+.tag.p3 {
+  background: #26384f;
+  color: #a9d4ff;
+}
+
+.tag.done {
+  background: #294534;
+  color: #9ae6b1;
+}
+
+.tag.doing {
+  background: #5b461f;
+  color: #ffe4a3;
+}
+
+.tag.todo {
+  background: #2a3a58;
+  color: #9fc2ff;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.stat {
+  background: #101319;
+  border: 1px solid #212736;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.stat strong {
+  display: block;
+  font-size: 24px;
+  color: #d7e7ff;
+}
+
+.stat span {
+  color: #a9b1bd;
+  font-size: 13px;
+}
+
+.link {
+  color: #7cb7ff;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.65);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal {
+  width: min(900px, 92vw);
+  background: #171a21;
+  border: 1px solid #394153;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 20px 80px rgba(0,0,0,.4);
+}
+
+.editor {
+  display: none;
+  gap: 10px;
+}
+
+.editor.active {
+  display: grid;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+label {
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.empty {
+  color: #98a4b6;
+  padding: 24px;
+  border: 1px dashed #394153;
+  border-radius: 14px;
+  text-align: center;
+}
+
+@media (max-width: 1100px) {
+  .topbar {
+    flex-direction: column;
+  }
+
+  .date-panel {
+    width: 100%;
+  }
+}
+
+@media (max-width: 1000px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .task-card,
+  .notes-card {
+    grid-column: span 1;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .item-row {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .two-col {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-head {
+    grid-template-columns: 1fr 1fr;
+  }
+}
