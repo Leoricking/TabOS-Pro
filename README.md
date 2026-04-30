@@ -80,13 +80,26 @@ Tabs-manager-Pro/
 │   ├── manifest.json
 │   ├── background.js
 │   ├── popup.html
+│   ├── popup.css
 │   ├── popup.js
 │   ├── merge_engine.js
 │   ├── template_manager.js
-│   └── planner/
-│       ├── planner.html
-│       ├── planner.css
-│       └── planner.js
+│   │
+│   ├── planner/
+│   │   ├── planner.html
+│   │   ├── planner.css
+│   │   └── planner.js
+│   │
+│   ├── trading/
+│   │   ├── trading.html
+│   │   ├── trading.css
+│   │   └── trading.js
+│   │
+│   └── sync/
+│       ├── sync.html
+│       ├── sync.css
+│       └── sync.js
+│
 ├── tools/
 │   ├── worklog_parser.py
 │   └── html_generator.py
@@ -97,7 +110,8 @@ Tabs-manager-Pro/
 │
 ├── run_worklog.bat
 ├── README.md
-└── How to use.txt
+├── How to use.txt
+└── .gitignore
 ```
 
 🇺🇸 English
@@ -231,18 +245,20 @@ python tools\worklog_parser.py 工作日誌.txt output\worklog.html
 
 👉 永遠只有一份乾淨知識庫
 
-❗ 注意
-狀態存在 localStorage
-清除瀏覽器資料會消失
-記得匯出保存
+### ⚠️ 注意事項
+* managed HTML 狀態依賴 localStorage
+* 清除瀏覽器資料可能導致狀態消失
+* 重要資料請定期匯出 JSON
+* GitHub Token 不要提交到 GitHub
+* Trading Mode 僅供研究與紀錄，不構成投資建議
+* 券商 API Key 不應放在 Extension 前端，應放 Python 後端
 
-👨‍💻 適合族群
-工程師
-
-HPC / Server / Network
-
-AI 使用者
-
-重度分頁使用者
+### 👨‍💻 適合族群
+* 工程師
+* HPC / Server / Network 使用者
+* AI 重度使用者
+* 多分頁研究者
+* 股票 / 台股策略紀錄使用者
+* 需要每日任務與工作日誌整合的人
 
 Built with by Rossi Huang
