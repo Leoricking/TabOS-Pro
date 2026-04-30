@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tabs Manager Pro Sync Center</title>
+  <link rel="stylesheet" href="sync.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>☁️ Tabs Manager Pro Sync Center</h1>
+      <p>同步 Planner、Trading、Tabs 相關 localStorage 資料。</p>
+      <p class="warning">GitHub Token 僅存在本機 localStorage。請使用私人電腦操作。</p>
+    </header>
+
+    <section class="card">
+      <h2>1. 手動備份 / 還原</h2>
+
+      <div class="actions">
+        <button id="exportAllBtn" class="success">匯出全部資料 JSON</button>
+
+        <label class="file-btn">
+          匯入全部資料 JSON
+          <input id="importAllInput" type="file" accept=".json" />
+        </label>
+      </div>
+
+      <div id="localSummary" class="summary"></div>
+    </section>
+
+    <section class="card">
+      <h2>2. GitHub Gist 遠端同步</h2>
+
+      <div class="form-grid">
+        <div>
+          <label>GitHub Token</label>
+          <input id="githubTokenInput" type="password" placeholder="ghp_xxx 或 fine-grained token" />
+        </div>
+
+        <div>
+          <label>Gist ID（第一次可留空，建立後會自動填入）</label>
+          <input id="gistIdInput" placeholder="例如 abc123..." />
+        </div>
+
+        <div>
+          <label>同步檔名</label>
+          <input id="gistFileInput" value="tabs-manager-pro-sync.json" />
+        </div>
+
+        <div>
+          <label>同步模式</label>
+          <select id="syncModeInput">
+            <option value="all">全部資料</option>
+            <option value="planner">只同步 Planner</option>
+            <option value="trading">只同步 Trading</option>
+            <option value="tabs">只同步 Tabs</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="saveSettingsBtn">儲存同步設定</button>
+        <button id="uploadGistBtn" class="primary">上傳到 Gist</button>
+        <button id="downloadGistBtn" class="success">從 Gist 下載並還原</button>
+        <button id="clearSettingsBtn" class="danger">清除同步設定</button>
+      </div>
+
+      <div id="gistStatus" class="status">尚未同步</div>
+    </section>
+
+    <section class="card">
+      <h2>3. 同步內容說明</h2>
+      <div class="info-grid">
+        <div>
+          <h3>Planner</h3>
+          <p>每日行程、待辦、Tabs 匯入、Worklog 匯入、每日筆記。</p>
+        </div>
+        <div>
+          <h3>Trading</h3>
+          <p>自選股、當沖、短線、中線、長線、回測信心指標。</p>
+        </div>
+        <div>
+          <h3>Tabs</h3>
+          <p>Tabs Manager Pro 匯出的管理頁面狀態資料。</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="sync.js"></script>
+</body>
+</html>

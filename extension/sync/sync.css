@@ -1,0 +1,150 @@
+* {
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    background: #0f1115;
+    color: #e8e8e8;
+    font-family: Arial, "Microsoft JhengHei", sans-serif;
+  }
+  
+  .app {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  
+  header {
+    margin-bottom: 20px;
+  }
+  
+  h1 {
+    margin: 0 0 8px;
+    font-size: 36px;
+    font-weight: 900;
+  }
+  
+  p {
+    margin: 0;
+    color: #a9b1bd;
+    line-height: 1.7;
+  }
+  
+  .warning {
+    color: #ffcc80;
+    margin-top: 6px;
+  }
+  
+  .card {
+    background: #171a21;
+    border: 1px solid #252b36;
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 18px;
+  }
+  
+  h2 {
+    color: #ffb86c;
+    margin: 0 0 14px;
+    font-size: 24px;
+  }
+  
+  h3 {
+    margin: 0 0 8px;
+    color: #dbe7ff;
+  }
+  
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 12px 0;
+  }
+  
+  button,
+  .file-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    background: #2b3342;
+    color: white;
+    font-weight: 800;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .file-btn input {
+    display: none;
+  }
+  
+  .primary {
+    background: #4c7dff;
+  }
+  
+  .success {
+    background: #2f9d62;
+  }
+  
+  .danger {
+    background: #d84d4d;
+  }
+  
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  label {
+    display: block;
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  
+  input,
+  select {
+    background: #0f1115;
+    color: white;
+    border: 1px solid #353d4c;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    width: 100%;
+  }
+  
+  .summary,
+  .status {
+    background: #101319;
+    border: 1px solid #212736;
+    border-radius: 14px;
+    padding: 14px;
+    color: #cbd5e1;
+    white-space: pre-wrap;
+    line-height: 1.7;
+  }
+  
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  
+  .info-grid div {
+    background: #101319;
+    border: 1px solid #212736;
+    border-radius: 14px;
+    padding: 14px;
+  }
+  
+  @media (max-width: 900px) {
+    .form-grid,
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+  }

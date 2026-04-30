@@ -179,6 +179,18 @@ function openPlanner() {
   });
 }
 
+function openTrading() {
+  chrome.tabs.create({
+    url: chrome.runtime.getURL("trading/trading.html")
+  });
+}
+
+function openSync() {
+  chrome.tabs.create({
+    url: chrome.runtime.getURL("sync/sync.html")
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("backupBtn").addEventListener("click", backupCurrentTabs);
   document.getElementById("mergeBtn").addEventListener("click", mergeWithCurrentTabs);
@@ -187,5 +199,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const plannerBtn = document.getElementById("openPlannerBtn");
   if (plannerBtn) {
     plannerBtn.addEventListener("click", openPlanner);
+  }
+
+  const tradingBtn = document.getElementById("openTradingBtn");
+  if (tradingBtn) {
+    tradingBtn.addEventListener("click", openTrading);
+  }
+
+  const syncBtn = document.getElementById("openSyncBtn");
+  if (syncBtn) {
+    syncBtn.addEventListener("click", openSync);
   }
 });

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tabs Manager Pro Trading Mode</title>
+  <link rel="stylesheet" href="trading.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div>
+        <h1>📈 Tabs Manager Pro Trading Mode v3</h1>
+        <p>台股自選股、當沖、短線、中線、長線、回測信心指標、Python Engine API 同步與 Planner 任務同步。</p>
+        <p class="disclaimer">僅供研究、記錄與決策輔助，不構成投資建議。</p>
+      </div>
+
+      <div class="top-actions">
+        <button id="addStockBtn" class="primary">+ 新增股票</button>
+        <button id="exportJsonBtn" class="success">匯出 JSON</button>
+        <label class="file-btn">
+          匯入 JSON
+          <input id="importJsonInput" type="file" accept=".json" />
+        </label>
+        <button id="clearAllBtn" class="danger">清空全部</button>
+      </div>
+    </header>
+
+    <section class="api-panel">
+      <div>
+        <h2>🔌 Python Engine API</h2>
+        <p>建議後端：FastAPI / Flask，預設 <code>http://127.0.0.1:8787</code></p>
+      </div>
+
+      <div class="api-grid">
+        <div>
+          <label>API Endpoint</label>
+          <input id="apiEndpointInput" placeholder="http://127.0.0.1:8787" />
+        </div>
+
+        <div>
+          <label>連線狀態</label>
+          <div id="apiStatus" class="status-pill offline">Offline</div>
+        </div>
+
+        <div>
+          <label>Last update</label>
+          <div id="lastUpdateText" class="status-text">尚未同步</div>
+        </div>
+
+        <div class="api-actions">
+          <button id="saveApiBtn">儲存 Endpoint</button>
+          <button id="checkApiBtn">檢查連線</button>
+          <button id="syncSignalsBtn" class="primary">一鍵同步後端訊號</button>
+        </div>
+      </div>
+
+      <div id="apiMessage" class="api-message">等待同步。</div>
+    </section>
+
+    <section class="priority-help">
+      <h2>📌 優先級說明</h2>
+      <div class="priority-grid">
+        <div><strong>P1</strong><span>最高優先級：今天盤中一定要處理，例如觸發停損、支撐、突破、當沖訊號。</span></div>
+        <div><strong>P2</strong><span>中優先級：本週追蹤，等待條件成立或回測確認。</span></div>
+        <div><strong>P3</strong><span>低優先級：長期觀察，有空再看。</span></div>
+      </div>
+    </section>
+
+    <section class="toolbar">
+      <input id="searchInput" placeholder="搜尋股票代號、名稱、策略、tag、訊號..." />
+
+      <select id="priorityFilter">
+        <option value="">全部優先級</option>
+        <option value="P1">P1</option>
+        <option value="P2">P2</option>
+        <option value="P3">P3</option>
+      </select>
+
+      <select id="triggerFilter">
+        <option value="">全部觸發狀態</option>
+        <option value="buy-zone">進入買區</option>
+        <option value="invalid">失效 / 停損</option>
+        <option value="strong">高信心</option>
+        <option value="neutral">一般</option>
+      </select>
+
+      <select id="ratingFilter">
+        <option value="">全部評級</option>
+        <option value="A+">A+</option>
+        <option value="A">A</option>
+        <option value="A-">A-</option>
+        <option value="B+">B+</option>
+        <option value="B">B</option>
+        <option value="B-">B-</option>
+        <option value="C">C</option>
+      </select>
+
+      <select id="actionFilter">
+        <option value="">全部操作</option>
+        <option value="建議試單">建議試單</option>
+        <option value="等待回測">等待回測</option>
+        <option value="可小量試單">可小量試單</option>
+        <option value="續抱">續抱</option>
+        <option value="減碼">減碼</option>
+        <option value="避開">避開</option>
+        <option value="觀察">觀察</option>
+      </select>
+    </section>
+
+    <section class="stats" id="stats"></section>
+
+    <main class="layout">
+      <aside class="watchlist">
+        <div class="section-head">
+          <h2>⭐ 自選股</h2>
+          <button id="seedBtn">載入範例</button>
+        </div>
+        <div id="stockList"></div>
+      </aside>
+
+      <section class="detail">
+        <div id="detailPanel" class="empty">
+          請選擇或新增一檔股票。
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modalMask" class="modal-mask">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="modalTitle">新增股票</h2>
+        <button id="closeModalBtn">✕</button>
+      </div>
+
+      <div class="form-grid">
+        <div>
+          <label>股票代號</label>
+          <input id="symbolInput" placeholder="例如 2330" />
+        </div>
+
+        <div>
+          <label>股票名稱</label>
+          <input id="nameInput" placeholder="例如 台積電" />
+        </div>
+
+        <div>
+          <label>市場</label>
+          <input id="marketInput" value="TW" />
+        </div>
+
+        <div>
+          <label>現價</label>
+          <input id="priceInput" type="number" step="0.01" />
+        </div>
+
+        <div>
+          <label>漲跌幅 %</label>
+          <input id="changeInput" type="number" step="0.01" />
+        </div>
+
+        <div>
+          <label>優先級</label>
+          <select id="priorityInput">
+            <option value="P1">P1 - 今日必看</option>
+            <option value="P2">P2 - 近期追蹤</option>
+            <option value="P3">P3 - 長期觀察</option>
+          </select>
+        </div>
+
+        <div>
+          <label>主評級</label>
+          <select id="mainRatingInput">
+            <option value="A+">A+</option>
+            <option value="A">A</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B">B</option>
+            <option value="B-">B-</option>
+            <option value="C">C</option>
+          </select>
+        </div>
+
+        <div class="wide">
+          <label>Tags（逗號分隔）</label>
+          <input id="tagsInput" placeholder="AI, 半導體, 網通, 觀察" />
+        </div>
+      </div>
+
+      <hr />
+
+      <h3>當沖策略</h3>
+      <div class="form-grid">
+        <div>
+          <label>當沖時效</label>
+          <input id="dayTimeframeInput" value="今日盤中 / 不留倉" />
+        </div>
+        <div>
+          <label>當沖評級</label>
+          <input id="dayRatingInput" placeholder="B-" />
+        </div>
+        <div>
+          <label>不追價位</label>
+          <input id="dayNoChaseInput" placeholder="2165 不追" />
+        </div>
+        <div>
+          <label>低接觀察</label>
+          <input id="dayBuyZoneInput" placeholder="2150-2160" />
+        </div>
+        <div>
+          <label>轉強價位</label>
+          <input id="dayTurnStrongInput" placeholder="站回 2180" />
+        </div>
+        <div>
+          <label>強勢價位</label>
+          <input id="dayStrongInput" placeholder="站回 2200" />
+        </div>
+        <div>
+          <label>停損</label>
+          <input id="dayStopLossInput" placeholder="跌破 2150 拉不回" />
+        </div>
+        <div>
+          <label>當沖結論</label>
+          <input id="dayConclusionInput" placeholder="當沖 B-，走勢偏弱，不適合追" />
+        </div>
+      </div>
+
+      <h3>短線策略</h3>
+      <div class="form-grid">
+        <div>
+          <label>短線時效</label>
+          <input id="shortTimeframeInput" value="1-10 個交易日" />
+        </div>
+        <div>
+          <label>短線評級</label>
+          <input id="shortRatingInput" placeholder="B" />
+        </div>
+        <div>
+          <label>第一買區</label>
+          <input id="shortBuy1Input" placeholder="2150-2160" />
+        </div>
+        <div>
+          <label>第二買區</label>
+          <input id="shortBuy2Input" placeholder="2100-2130" />
+        </div>
+        <div>
+          <label>停利</label>
+          <input id="shortTakeProfitInput" placeholder="2220-2250" />
+        </div>
+        <div>
+          <label>強壓</label>
+          <input id="shortStrongResistanceInput" placeholder="2280" />
+        </div>
+        <div>
+          <label>停損</label>
+          <input id="shortStopLossInput" placeholder="跌破 2100" />
+        </div>
+        <div>
+          <label>短線結論</label>
+          <input id="shortConclusionInput" placeholder="短線 B，可低接但不是最強" />
+        </div>
+      </div>
+
+      <h3>中線策略</h3>
+      <div class="form-grid">
+        <div>
+          <label>中線時效</label>
+          <input id="midTimeframeInput" value="2-8 週" />
+        </div>
+        <div>
+          <label>中線評級</label>
+          <input id="midRatingInput" placeholder="A-" />
+        </div>
+        <div>
+          <label>中線理想買區</label>
+          <input id="midIdealBuyInput" placeholder="2100-2130" />
+        </div>
+        <div>
+          <label>中線更好買區</label>
+          <input id="midBetterBuyInput" placeholder="2050-2080" />
+        </div>
+        <div>
+          <label>中線轉強</label>
+          <input id="midTurnStrongInput" placeholder="站回 2220" />
+        </div>
+        <div>
+          <label>中線目標</label>
+          <input id="midTargetInput" placeholder="2280-2350" />
+        </div>
+        <div>
+          <label>防守</label>
+          <input id="midDefenseInput" placeholder="2050" />
+        </div>
+        <div>
+          <label>失敗</label>
+          <input id="midFailureInput" placeholder="跌破 2050" />
+        </div>
+        <div class="wide">
+          <label>中線結論</label>
+          <textarea id="midConclusionInput"></textarea>
+        </div>
+      </div>
+
+      <h3>長線策略</h3>
+      <div class="form-grid">
+        <div>
+          <label>長線時效</label>
+          <input id="longTimeframeInput" value="3-12 個月以上" />
+        </div>
+        <div>
+          <label>長線評級</label>
+          <input id="longRatingInput" placeholder="A" />
+        </div>
+        <div>
+          <label>長線分批</label>
+          <input id="longBatchInput" placeholder="2050-2130" />
+        </div>
+        <div>
+          <label>長線核心區</label>
+          <input id="longCoreInput" placeholder="1950-2050" />
+        </div>
+        <div>
+          <label>不追</label>
+          <input id="longNoChaseInput" placeholder="2200 以上" />
+        </div>
+        <div>
+          <label>停利觀察</label>
+          <input id="longTakeProfitInput" placeholder="2350-2500" />
+        </div>
+        <div>
+          <label>長線破壞</label>
+          <input id="longBreakInput" placeholder="跌破 1900" />
+        </div>
+        <div>
+          <label>長線結論</label>
+          <input id="longConclusionInput" placeholder="長線 A，核心型標的但不急追" />
+        </div>
+      </div>
+
+      <h3>回測信心指標</h3>
+      <div class="form-grid">
+        <div>
+          <label>勝率 Win Rate %</label>
+          <input id="winRateInput" type="number" step="0.01" />
+        </div>
+        <div>
+          <label>平均獲利 Avg Profit %</label>
+          <input id="avgProfitInput" type="number" step="0.01" />
+        </div>
+        <div>
+          <label>平均虧損 Avg Loss %</label>
+          <input id="avgLossInput" type="number" step="0.01" />
+        </div>
+        <div>
+          <label>Profit Factor</label>
+          <input id="profitFactorInput" type="number" step="0.01" />
+        </div>
+        <div>
+          <label>Sharpe</label>
+          <input id="sharpeInput" type="number" step="0.01" />
+        </div>
+        <div>
+          <label>Max Drawdown %</label>
+          <input id="maxDrawdownInput" type="number" step="0.01" />
+        </div>
+        <div>
+          <label>歷史相似度 %</label>
+          <input id="similarityInput" type="number" step="0.01" />
+        </div>
+        <div>
+          <label>策略信心度 %</label>
+          <input id="confidenceInput" type="number" step="0.01" />
+        </div>
+        <div>
+          <label>後端 Score</label>
+          <input id="backendScoreInput" type="number" step="0.01" />
+        </div>
+        <div>
+          <label>後端狀態</label>
+          <input id="backendStatusInput" placeholder="WATCH_BUY_ZONE / INVALID / STRONG" />
+        </div>
+      </div>
+
+      <h3>AI Decision Assistant</h3>
+      <div class="form-grid">
+        <div>
+          <label>操作結論</label>
+          <select id="decisionActionInput">
+            <option value="建議試單">建議試單</option>
+            <option value="等待回測">等待回測</option>
+            <option value="可小量試單">可小量試單</option>
+            <option value="續抱">續抱</option>
+            <option value="減碼">減碼</option>
+            <option value="避開">避開</option>
+            <option value="觀察">觀察</option>
+          </select>
+        </div>
+
+        <div>
+          <label>是否可追</label>
+          <select id="decisionChaseInput">
+            <option value="不追">不追</option>
+            <option value="可追但小量">可追但小量</option>
+            <option value="可追">可追</option>
+            <option value="禁止追價">禁止追價</option>
+          </select>
+        </div>
+
+        <div>
+          <label>低接區</label>
+          <input id="decisionBuyZoneInput" />
+        </div>
+
+        <div>
+          <label>停損線</label>
+          <input id="decisionStopLossInput" />
+        </div>
+
+        <div>
+          <label>停利 / 壓力區</label>
+          <input id="decisionTakeProfitInput" />
+        </div>
+
+        <div>
+          <label>風險等級</label>
+          <select id="decisionRiskInput">
+            <option value="低">低</option>
+            <option value="中">中</option>
+            <option value="高">高</option>
+          </select>
+        </div>
+
+        <div class="wide">
+          <label>後端 Signal Message</label>
+          <textarea id="backendSignalMessageInput"></textarea>
+        </div>
+
+        <div class="wide">
+          <label>AI 輔助摘要 / 操作提醒</label>
+          <textarea id="decisionSummaryInput"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="autoDecisionBtn">規則輔助產生摘要</button>
+        <button id="cancelBtn">取消</button>
+        <button id="saveStockBtn" class="success">儲存股票</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="trading.js"></script>
+</body>
+</html>

@@ -1,14 +1,41 @@
 const STORAGE_KEY = "tabs_manager_pro_planner_v2";
 
-let currentDate = todayString();
+let currentDate = getLocalDateString(new Date());
 let calendarYear = Number(currentDate.slice(0, 4));
 let calendarMonth = Number(currentDate.slice(5, 7));
 let planner = loadPlanner();
+
 let modalMode = null;
 let editingId = null;
 
+function getLocalDateString(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 function todayString() {
-  return new Date().toISOString().slice(0, 10);
+  return getLocalDateString(new Date());
+}
+
+function parseLocalDate(dateString) {
+  const parts = String(dateString || "").split("-").map(Number);
+  const y = parts[0];
+  const m = parts[1];
+  const d = parts[2];
+
+  if (!y || !m || !d) {
+    return new Date();
+  }
+
+  return new Date(y, m - 1, d);
+}
+
+function shiftLocalDate(dateString, days) {
+  const d = parseLocalDate(dateString);
+  d.setDate(d.getDate() + days);
+  return getLocalDateString(d);
 }
 
 function makeId(prefix) {
@@ -26,7 +53,8 @@ function makeDateString(year, month, day) {
 function loadPlanner() {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-  } catch {
+  } catch (error) {
+    console.error("loadPlanner failed:", error);
     return {};
   }
 }
@@ -46,6 +74,7 @@ function dayData(date = currentDate) {
       notes: ""
     };
   }
+
   return planner[date];
 }
 
@@ -101,18 +130,19 @@ function setDate(date) {
   if (!date) return;
 
   currentDate = date;
-  syncCalendarFromDate(date);
+  syncCalendarFromDate(currentDate);
 
   const dateInput = document.getElementById("dateInput");
-  if (dateInput) dateInput.value = currentDate;
+  if (dateInput) {
+    dateInput.value = currentDate;
+  }
 
   render();
 }
 
 function shiftDate(days) {
-  const d = new Date(currentDate + "T00:00:00");
-  d.setDate(d.getDate() + days);
-  setDate(d.toISOString().slice(0, 10));
+  const nextDate = shiftLocalDate(currentDate, days);
+  setDate(nextDate);
 }
 
 function shiftMonth(delta) {
@@ -138,7 +168,9 @@ function shiftYear(delta) {
 
 function initYearSelect() {
   const select = document.getElementById("yearSelect");
-  if (!select || select.options.length > 0) return;
+  if (!select) return;
+
+  if (select.options.length > 0) return;
 
   const nowYear = new Date().getFullYear();
   const minYear = nowYear - 10;
@@ -176,7 +208,7 @@ function renderCalendar() {
   let html = "";
 
   for (let i = 0; i < startDay; i++) {
-    html += `<button class="day-cell" disabled></button>`;
+    html += `<button class="day-cell" type="button" disabled></button>`;
   }
 
   for (let day = 1; day <= days; day++) {
@@ -189,7 +221,16 @@ function renderCalendar() {
       hasDayData(date) ? "has-data" : ""
     ].filter(Boolean).join(" ");
 
-    html += `<button class="${classes}" data-action="set-date" data-date="${date}">${day}</button>`;
+    html += `
+      <button
+        class="${classes}"
+        type="button"
+        data-action="set-date"
+        data-date="${date}"
+      >
+        ${day}
+      </button>
+    `;
   }
 
   grid.innerHTML = html;
@@ -199,9 +240,13 @@ function openModal(mode, id = null) {
   modalMode = mode;
   editingId = id;
 
-  document.getElementById("taskEditor").classList.remove("active");
-  document.getElementById("scheduleEditor").classList.remove("active");
-  document.getElementById("focusEditor").classList.remove("active");
+  const taskEditor = document.getElementById("taskEditor");
+  const scheduleEditor = document.getElementById("scheduleEditor");
+  const focusEditor = document.getElementById("focusEditor");
+
+  if (taskEditor) taskEditor.classList.remove("active");
+  if (scheduleEditor) scheduleEditor.classList.remove("active");
+  if (focusEditor) focusEditor.classList.remove("active");
 
   if (mode === "task") {
     document.getElementById("modalTitle").textContent = id ? "編輯任務" : "新增任務";
@@ -376,8 +421,10 @@ function createTaskFromWorklog(id) {
 function readFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
+
     reader.onload = e => resolve(e.target.result);
     reader.onerror = () => reject(new Error("讀取檔案失敗"));
+
     reader.readAsText(file, "utf-8");
   });
 }
@@ -401,13 +448,17 @@ function parseTabsHtml(htmlText) {
           });
         }
       }
-    } catch {}
+    } catch (error) {
+      console.warn("parse INITIAL_DATA failed:", error);
+    }
   }
 
   if (!result.length) {
     const doc = new DOMParser().parseFromString(htmlText, "text/html");
+
     for (const a of Array.from(doc.querySelectorAll("a"))) {
       const href = a.getAttribute("href");
+
       if (/^https?:/i.test(href || "")) {
         result.push({
           id: makeId("tab"),
@@ -422,6 +473,7 @@ function parseTabsHtml(htmlText) {
   }
 
   const seen = new Set();
+
   return result.filter(x => {
     if (!x.url || seen.has(x.url)) return false;
     seen.add(x.url);
@@ -431,13 +483,15 @@ function parseTabsHtml(htmlText) {
 
 function parseWorklogHtml(htmlText) {
   const result = [];
-  const dataMatch = htmlText.match(/const\s+INITIAL_DATA\s*=\s*(\[.*?\]);/s);
+  const dataMatch = htmlText.match(/const\s+(?:INITIAL_DATA|DATA)\s*=\s*(\[.*?\]);/s);
 
   if (dataMatch) {
     try {
       const rows = JSON.parse(dataMatch[1]);
+
       for (const item of rows) {
         const itemDate = String(item.date || "").replaceAll("/", "-");
+
         if (itemDate === currentDate) {
           result.push({
             id: makeId("worklog"),
@@ -449,7 +503,9 @@ function parseWorklogHtml(htmlText) {
           });
         }
       }
-    } catch {}
+    } catch (error) {
+      console.warn("parse worklog data failed:", error);
+    }
   }
 
   return result;
@@ -461,6 +517,7 @@ async function importTabsHtml(file) {
   const d = dayData();
 
   const seen = new Set(d.tabs.map(x => x.url));
+
   for (const tab of tabs) {
     if (!seen.has(tab.url)) {
       d.tabs.push(tab);
@@ -478,6 +535,7 @@ async function importWorklogHtml(file) {
   const d = dayData();
 
   d.worklogs.push(...rows);
+
   savePlanner();
   render();
 }
@@ -498,10 +556,13 @@ function exportPlannerHtml() {
 }
 
 function exportJson() {
-  const blob = new Blob([JSON.stringify(planner, null, 2)], { type: "application/json;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
+  const blob = new Blob([JSON.stringify(planner, null, 2)], {
+    type: "application/json;charset=utf-8"
+  });
 
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
+
   a.href = url;
   a.download = "tabs_manager_pro_planner_backup.json";
   a.click();
@@ -524,47 +585,9 @@ function clearDay() {
   render();
 }
 
-function renderCalendar() {
-  initYearSelect();
-
-  const yearSelect = document.getElementById("yearSelect");
-  const monthSelect = document.getElementById("monthSelect");
-  const grid = document.getElementById("calendarGrid");
-
-  if (!yearSelect || !monthSelect || !grid) return;
-
-  yearSelect.value = String(calendarYear);
-  monthSelect.value = String(calendarMonth);
-
-  const first = new Date(calendarYear, calendarMonth - 1, 1);
-  const startDay = first.getDay();
-  const days = new Date(calendarYear, calendarMonth, 0).getDate();
-  const today = todayString();
-
-  let html = "";
-
-  for (let i = 0; i < startDay; i++) {
-    html += `<button class="day-cell" disabled></button>`;
-  }
-
-  for (let day = 1; day <= days; day++) {
-    const date = makeDateString(calendarYear, calendarMonth, day);
-
-    const classes = [
-      "day-cell",
-      date === today ? "today" : "",
-      date === currentDate ? "active" : "",
-      hasDayData(date) ? "has-data" : ""
-    ].filter(Boolean).join(" ");
-
-    html += `<button class="${classes}" data-action="set-date" data-date="${date}">${day}</button>`;
-  }
-
-  grid.innerHTML = html;
-}
-
 function renderStats() {
   const d = dayData();
+
   const done = d.tasks.filter(x => x.status === "done").length;
   const doing = d.tasks.filter(x => x.status === "doing").length;
   const todo = d.tasks.filter(x => x.status === "todo").length;
@@ -599,8 +622,8 @@ function renderFocus() {
       <div class="item-row">
         <div class="item-title">${escapeHtml(x.text)}</div>
         <div class="actions">
-          <button data-action="edit-focus" data-id="${x.id}">修改</button>
-          <button class="danger" data-action="delete-focus" data-id="${x.id}">刪除</button>
+          <button type="button" data-action="edit-focus" data-id="${x.id}">修改</button>
+          <button type="button" class="danger" data-action="delete-focus" data-id="${x.id}">刪除</button>
         </div>
       </div>
     </div>
@@ -626,19 +649,30 @@ function renderSchedules() {
           </div>
         </div>
         <div class="actions">
-          <button data-action="edit-schedule" data-id="${x.id}">修改</button>
-          <button class="danger" data-action="delete-schedule" data-id="${x.id}">刪除</button>
+          <button type="button" data-action="edit-schedule" data-id="${x.id}">修改</button>
+          <button type="button" class="danger" data-action="delete-schedule" data-id="${x.id}">刪除</button>
         </div>
       </div>
     </div>
   `).join("");
 }
 
+function statusText(status) {
+  if (status === "done") return "已完成";
+  if (status === "doing") return "進行中";
+  return "待辦";
+}
+
 function renderTasks() {
   const d = dayData();
-  const q = document.getElementById("searchInput").value.trim().toLowerCase();
-  const status = document.getElementById("statusFilter").value;
-  const priority = document.getElementById("priorityFilter").value;
+
+  const searchInput = document.getElementById("searchInput");
+  const statusFilter = document.getElementById("statusFilter");
+  const priorityFilter = document.getElementById("priorityFilter");
+
+  const q = searchInput ? searchInput.value.trim().toLowerCase() : "";
+  const status = statusFilter ? statusFilter.value : "";
+  const priority = priorityFilter ? priorityFilter.value : "";
 
   const tasks = d.tasks.filter(x => {
     if (status && x.status !== status) return false;
@@ -673,27 +707,21 @@ function renderTasks() {
           ${x.note ? `<div class="item-sub">${escapeHtml(x.note)}</div>` : ""}
           <div class="meta">
             <span class="tag ${x.status}">${statusText(x.status)}</span>
-            <span class="tag ${x.priority.toLowerCase()}">${escapeHtml(x.priority)}</span>
+            <span class="tag ${String(x.priority || "P3").toLowerCase()}">${escapeHtml(x.priority || "P3")}</span>
             <span class="tag">${escapeHtml(x.category || "未分類")}</span>
             ${(x.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}
           </div>
         </div>
         <div class="actions">
-          <button data-action="task-todo" data-id="${x.id}">待辦</button>
-          <button class="warn" data-action="task-doing" data-id="${x.id}">進行</button>
-          <button class="success" data-action="task-done" data-id="${x.id}">完成</button>
-          <button data-action="edit-task" data-id="${x.id}">修改</button>
-          <button class="danger" data-action="delete-task" data-id="${x.id}">刪除</button>
+          <button type="button" data-action="task-todo" data-id="${x.id}">待辦</button>
+          <button type="button" class="warn" data-action="task-doing" data-id="${x.id}">進行</button>
+          <button type="button" class="success" data-action="task-done" data-id="${x.id}">完成</button>
+          <button type="button" data-action="edit-task" data-id="${x.id}">修改</button>
+          <button type="button" class="danger" data-action="delete-task" data-id="${x.id}">刪除</button>
         </div>
       </div>
     </div>
   `).join("");
-}
-
-function statusText(status) {
-  if (status === "done") return "已完成";
-  if (status === "doing") return "進行中";
-  return "待辦";
 }
 
 function renderTabs() {
@@ -720,8 +748,8 @@ function renderTabs() {
           </div>
         </div>
         <div class="actions">
-          <button class="primary" data-action="tab-to-task" data-id="${x.id}">轉任務</button>
-          <button class="danger" data-action="delete-tab" data-id="${x.id}">移除</button>
+          <button type="button" class="primary" data-action="tab-to-task" data-id="${x.id}">轉任務</button>
+          <button type="button" class="danger" data-action="delete-tab" data-id="${x.id}">移除</button>
         </div>
       </div>
     </div>
@@ -750,8 +778,8 @@ function renderWorklog() {
           </div>
         </div>
         <div class="actions">
-          <button class="primary" data-action="worklog-to-task" data-id="${x.id}">轉任務</button>
-          <button class="danger" data-action="delete-worklog" data-id="${x.id}">移除</button>
+          <button type="button" class="primary" data-action="worklog-to-task" data-id="${x.id}">轉任務</button>
+          <button type="button" class="danger" data-action="delete-worklog" data-id="${x.id}">移除</button>
         </div>
       </div>
     </div>
@@ -760,11 +788,18 @@ function renderWorklog() {
 
 function renderNotes() {
   const d = dayData();
-  document.getElementById("dailyNotes").value = d.notes || "";
+  const dailyNotes = document.getElementById("dailyNotes");
+
+  if (dailyNotes) {
+    dailyNotes.value = d.notes || "";
+  }
 }
 
 function render() {
-  document.getElementById("dateInput").value = currentDate;
+  const dateInput = document.getElementById("dateInput");
+  if (dateInput) {
+    dateInput.value = currentDate;
+  }
 
   renderCalendar();
   renderStats();
@@ -776,95 +811,208 @@ function render() {
   renderNotes();
 }
 
+function bindStaticEvents() {
+  const dateInput = document.getElementById("dateInput");
+  if (dateInput) {
+    dateInput.value = currentDate;
+    dateInput.addEventListener("change", e => setDate(e.target.value));
+  }
+
+  const yearSelect = document.getElementById("yearSelect");
+  if (yearSelect) {
+    yearSelect.addEventListener("change", e => {
+      calendarYear = Number(e.target.value);
+      renderCalendarOnly();
+    });
+  }
+
+  const monthSelect = document.getElementById("monthSelect");
+  if (monthSelect) {
+    monthSelect.addEventListener("change", e => {
+      calendarMonth = Number(e.target.value);
+      renderCalendarOnly();
+    });
+  }
+
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) searchInput.addEventListener("input", renderTasks);
+
+  const statusFilter = document.getElementById("statusFilter");
+  if (statusFilter) statusFilter.addEventListener("change", renderTasks);
+
+  const priorityFilter = document.getElementById("priorityFilter");
+  if (priorityFilter) priorityFilter.addEventListener("change", renderTasks);
+
+  const dailyNotes = document.getElementById("dailyNotes");
+  if (dailyNotes) {
+    dailyNotes.addEventListener("input", e => {
+      dayData().notes = e.target.value;
+      savePlanner();
+      renderCalendarOnly();
+    });
+  }
+
+  const importJsonInput = document.getElementById("importJsonInput");
+  if (importJsonInput) {
+    importJsonInput.addEventListener("change", e => {
+      if (e.target.files[0]) importJson(e.target.files[0]);
+    });
+  }
+
+  const tabsHtmlInput = document.getElementById("tabsHtmlInput");
+  if (tabsHtmlInput) {
+    tabsHtmlInput.addEventListener("change", e => {
+      if (e.target.files[0]) importTabsHtml(e.target.files[0]);
+    });
+  }
+
+  const worklogHtmlInput = document.getElementById("worklogHtmlInput");
+  if (worklogHtmlInput) {
+    worklogHtmlInput.addEventListener("change", e => {
+      if (e.target.files[0]) importWorklogHtml(e.target.files[0]);
+    });
+  }
+}
+
 document.addEventListener("click", event => {
+  const id = event.target.id;
+
+  if (id === "prevDayBtn") {
+    event.preventDefault();
+    shiftDate(-1);
+    return;
+  }
+
+  if (id === "nextDayBtn") {
+    event.preventDefault();
+    shiftDate(1);
+    return;
+  }
+
+  if (id === "todayBtn") {
+    event.preventDefault();
+    setDate(todayString());
+    return;
+  }
+
+  if (id === "prevMonthBtn") {
+    event.preventDefault();
+    shiftMonth(-1);
+    return;
+  }
+
+  if (id === "nextMonthBtn") {
+    event.preventDefault();
+    shiftMonth(1);
+    return;
+  }
+
+  if (id === "prevYearBtn") {
+    event.preventDefault();
+    shiftYear(-1);
+    return;
+  }
+
+  if (id === "nextYearBtn") {
+    event.preventDefault();
+    shiftYear(1);
+    return;
+  }
+
+  if (id === "addFocusBtn") {
+    event.preventDefault();
+    openModal("focus");
+    return;
+  }
+
+  if (id === "addTaskBtn") {
+    event.preventDefault();
+    openModal("task");
+    return;
+  }
+
+  if (id === "addScheduleBtn") {
+    event.preventDefault();
+    openModal("schedule");
+    return;
+  }
+
+  if (id === "cancelModalBtn") {
+    event.preventDefault();
+    closeModal();
+    return;
+  }
+
+  if (id === "saveModalBtn") {
+    event.preventDefault();
+    saveModal();
+    return;
+  }
+
+  if (id === "exportBtn") {
+    event.preventDefault();
+    exportPlannerHtml();
+    return;
+  }
+
+  if (id === "backupJsonBtn") {
+    event.preventDefault();
+    exportJson();
+    return;
+  }
+
+  if (id === "clearDayBtn") {
+    event.preventDefault();
+    clearDay();
+    return;
+  }
+
+  if (id === "importTabsBtn") {
+    event.preventDefault();
+    document.getElementById("tabsHtmlInput").click();
+    return;
+  }
+
+  if (id === "importWorklogBtn") {
+    event.preventDefault();
+    document.getElementById("worklogHtmlInput").click();
+    return;
+  }
+
   const btn = event.target.closest("[data-action]");
   if (!btn) return;
 
   const action = btn.dataset.action;
-  const id = btn.dataset.id;
+  const dataId = btn.dataset.id;
   const date = btn.dataset.date;
 
   if (action === "set-date") setDate(date);
 
-  if (action === "edit-task") openModal("task", id);
-  if (action === "delete-task") deleteItem("task", id);
-  if (action === "task-todo") setTaskStatus(id, "todo");
-  if (action === "task-doing") setTaskStatus(id, "doing");
-  if (action === "task-done") setTaskStatus(id, "done");
+  if (action === "edit-task") openModal("task", dataId);
+  if (action === "delete-task") deleteItem("task", dataId);
+  if (action === "task-todo") setTaskStatus(dataId, "todo");
+  if (action === "task-doing") setTaskStatus(dataId, "doing");
+  if (action === "task-done") setTaskStatus(dataId, "done");
 
-  if (action === "edit-schedule") openModal("schedule", id);
-  if (action === "delete-schedule") deleteItem("schedule", id);
+  if (action === "edit-schedule") openModal("schedule", dataId);
+  if (action === "delete-schedule") deleteItem("schedule", dataId);
 
-  if (action === "edit-focus") openModal("focus", id);
-  if (action === "delete-focus") deleteItem("focus", id);
+  if (action === "edit-focus") openModal("focus", dataId);
+  if (action === "delete-focus") deleteItem("focus", dataId);
 
-  if (action === "tab-to-task") createTaskFromTab(id);
-  if (action === "delete-tab") deleteItem("tab", id);
+  if (action === "tab-to-task") createTaskFromTab(dataId);
+  if (action === "delete-tab") deleteItem("tab", dataId);
 
-  if (action === "worklog-to-task") createTaskFromWorklog(id);
-  if (action === "delete-worklog") deleteItem("worklog", id);
+  if (action === "worklog-to-task") createTaskFromWorklog(dataId);
+  if (action === "delete-worklog") deleteItem("worklog", dataId);
 });
 
-document.getElementById("prevDayBtn").addEventListener("click", () => shiftDate(-1));
-document.getElementById("nextDayBtn").addEventListener("click", () => shiftDate(1));
-document.getElementById("todayBtn").addEventListener("click", () => setDate(todayString()));
-document.getElementById("dateInput").addEventListener("change", e => setDate(e.target.value));
-
-document.getElementById("prevMonthBtn").addEventListener("click", () => shiftMonth(-1));
-document.getElementById("nextMonthBtn").addEventListener("click", () => shiftMonth(1));
-document.getElementById("prevYearBtn").addEventListener("click", () => shiftYear(-1));
-document.getElementById("nextYearBtn").addEventListener("click", () => shiftYear(1));
-
-document.getElementById("yearSelect").addEventListener("change", e => {
-  calendarYear = Number(e.target.value);
-  renderCalendarOnly();
+document.addEventListener("DOMContentLoaded", () => {
+  bindStaticEvents();
+  render();
 });
 
-document.getElementById("monthSelect").addEventListener("change", e => {
-  calendarMonth = Number(e.target.value);
-  renderCalendarOnly();
-});
-
-document.getElementById("addFocusBtn").addEventListener("click", () => openModal("focus"));
-document.getElementById("addTaskBtn").addEventListener("click", () => openModal("task"));
-document.getElementById("addScheduleBtn").addEventListener("click", () => openModal("schedule"));
-
-document.getElementById("cancelModalBtn").addEventListener("click", closeModal);
-document.getElementById("saveModalBtn").addEventListener("click", saveModal);
-
-document.getElementById("searchInput").addEventListener("input", renderTasks);
-document.getElementById("statusFilter").addEventListener("change", renderTasks);
-document.getElementById("priorityFilter").addEventListener("change", renderTasks);
-
-document.getElementById("dailyNotes").addEventListener("input", e => {
-  dayData().notes = e.target.value;
-  savePlanner();
-  renderCalendarOnly();
-});
-
-document.getElementById("exportBtn").addEventListener("click", exportPlannerHtml);
-document.getElementById("backupJsonBtn").addEventListener("click", exportJson);
-
-document.getElementById("importJsonInput").addEventListener("change", e => {
-  if (e.target.files[0]) importJson(e.target.files[0]);
-});
-
-document.getElementById("clearDayBtn").addEventListener("click", clearDay);
-
-document.getElementById("importTabsBtn").addEventListener("click", () => {
-  document.getElementById("tabsHtmlInput").click();
-});
-
-document.getElementById("tabsHtmlInput").addEventListener("change", e => {
-  if (e.target.files[0]) importTabsHtml(e.target.files[0]);
-});
-
-document.getElementById("importWorklogBtn").addEventListener("click", () => {
-  document.getElementById("worklogHtmlInput").click();
-});
-
-document.getElementById("worklogHtmlInput").addEventListener("change", e => {
-  if (e.target.files[0]) importWorklogHtml(e.target.files[0]);
-});
-
-render();
+if (document.readyState !== "loading") {
+  bindStaticEvents();
+  render();
+}
