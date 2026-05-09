@@ -795,6 +795,10 @@ function renderNotes() {
   }
 }
 
+function openWeeklyReview() {
+  window.open("../weekly_review/weekly_review.html", "_blank");
+}
+
 function render() {
   const dateInput = document.getElementById("dateInput");
   if (dateInput) {
@@ -952,6 +956,12 @@ document.addEventListener("click", event => {
   if (id === "exportBtn") {
     event.preventDefault();
     exportPlannerHtml();
+    return;
+  }
+
+  if (id === "openWeeklyReviewBtn") {
+    event.preventDefault();
+    openWeeklyReview();
     return;
   }
 

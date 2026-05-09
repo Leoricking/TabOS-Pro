@@ -10,7 +10,7 @@
   <div class="app">
     <header>
       <h1>☁️ Tabs Manager Pro Sync Center</h1>
-      <p>同步 Planner、Trading、Tabs 相關 localStorage 資料。</p>
+      <p>同步 Planner、Weekly Review、Trading、Tabs 相關 localStorage 資料。</p>
       <p class="warning">GitHub Token 僅存在本機 localStorage。請使用私人電腦操作。</p>
     </header>
 
@@ -53,6 +53,7 @@
           <select id="syncModeInput">
             <option value="all">全部資料</option>
             <option value="planner">只同步 Planner</option>
+            <option value="weekly_review">只同步 Weekly Review</option>
             <option value="trading">只同步 Trading</option>
             <option value="tabs">只同步 Tabs</option>
           </select>
@@ -75,6 +76,10 @@
         <div>
           <h3>Planner</h3>
           <p>每日行程、待辦、Tabs 匯入、Worklog 匯入、每日筆記。</p>
+        </div>
+        <div>
+          <h3>Weekly Review</h3>
+          <p>每週復盤筆記、下週 Top 3、手動補充與匯出前暫存。</p>
         </div>
         <div>
           <h3>Trading</h3>

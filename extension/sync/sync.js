@@ -4,7 +4,11 @@ const KEY_GROUPS = {
   planner: [
     "tabs_manager_pro_planner_v2"
   ],
+  weekly_review: [
+    "tabs_manager_pro_weekly_review_v1"
+  ],
   trading: [
+    "tabs_manager_pro_trading_v3",
     "tabs_manager_pro_trading_v2",
     "tabs_manager_pro_trading_v1"
   ],
@@ -25,11 +29,13 @@ function detectTabsKeys() {
 
 function keysForMode(mode) {
   if (mode === "planner") return KEY_GROUPS.planner;
+  if (mode === "weekly_review") return KEY_GROUPS.weekly_review;
   if (mode === "trading") return KEY_GROUPS.trading;
   if (mode === "tabs") return detectTabsKeys();
 
   return [
     ...KEY_GROUPS.planner,
+    ...KEY_GROUPS.weekly_review,
     ...KEY_GROUPS.trading,
     ...detectTabsKeys()
   ];
@@ -139,11 +145,14 @@ function setGistStatus(text) {
 
 function renderLocalSummary() {
   const planner = localStorage.getItem("tabs_manager_pro_planner_v2");
+  const weeklyReview = localStorage.getItem("tabs_manager_pro_weekly_review_v1");
+  const tradingV3 = localStorage.getItem("tabs_manager_pro_trading_v3");
   const tradingV2 = localStorage.getItem("tabs_manager_pro_trading_v2");
   const tradingV1 = localStorage.getItem("tabs_manager_pro_trading_v1");
   const tabsKeys = detectTabsKeys();
 
   let plannerInfo = "無";
+  let weeklyReviewInfo = "無";
   let tradingInfo = "無";
 
   try {
@@ -156,7 +165,16 @@ function renderLocalSummary() {
   }
 
   try {
-    const raw = tradingV2 || tradingV1;
+    if (weeklyReview) {
+      const w = JSON.parse(weeklyReview);
+      weeklyReviewInfo = `${Object.keys(w).length} 週資料`;
+    }
+  } catch {
+    weeklyReviewInfo = "讀取失敗";
+  }
+
+  try {
+    const raw = tradingV3 || tradingV2 || tradingV1;
     if (raw) {
       const t = JSON.parse(raw);
       tradingInfo = `${Array.isArray(t) ? t.length : 0} 檔股票`;
@@ -167,6 +185,7 @@ function renderLocalSummary() {
 
   document.getElementById("localSummary").textContent = [
     `Planner：${plannerInfo}`,
+    `Weekly Review：${weeklyReviewInfo}`,
     `Trading：${tradingInfo}`,
     `Tabs keys：${tabsKeys.length}`,
     "",

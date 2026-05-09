@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tabs Manager Pro Weekly Review</title>
+  <link rel="stylesheet" href="weekly_review.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div>
+        <h1>🧭 Weekly Review 每週復盤</h1>
+        <p>整合 Planner、Tabs、Worklog、Trading，產生本週總結與下週 Top 3。</p>
+      </div>
+
+      <div class="week-panel">
+        <label>週起始日</label>
+        <input id="weekStartInput" type="date" />
+        <div class="week-actions">
+          <button id="prevWeekBtn">← 上週</button>
+          <button id="thisWeekBtn" class="primary">本週</button>
+          <button id="nextWeekBtn">下週 →</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="toolbar">
+      <button id="generateBtn" class="primary">重新產生復盤</button>
+      <button id="saveBtn" class="success">儲存本週筆記</button>
+      <button id="exportBtn" class="success">匯出 weekly_review.html</button>
+      <button id="openPlannerBtn">返回 Planner</button>
+      <button id="openSyncBtn">開啟 Sync Center</button>
+    </section>
+
+    <section class="card hero-card">
+      <div>
+        <h2 id="weekTitle">本週復盤</h2>
+        <p id="weekRangeText">-</p>
+      </div>
+      <div class="score-box">
+        <span>TabOS Clean Score</span>
+        <strong id="cleanScore">0</strong>
+      </div>
+    </section>
+
+    <main class="grid">
+      <section class="card span-2">
+        <div class="card-head">
+          <h2>📊 本週總覽</h2>
+          <span id="dataHealthBadge" class="badge">等待產生</span>
+        </div>
+        <div id="overviewGrid" class="metric-grid"></div>
+      </section>
+
+      <section class="card">
+        <h2>✅ 本週完成任務</h2>
+        <div id="completedTasks" class="list"></div>
+      </section>
+
+      <section class="card danger-card">
+        <h2>🔥 未完成 P1 / 風險項目</h2>
+        <div id="unfinishedP1" class="list"></div>
+      </section>
+
+      <section class="card">
+        <h2>🔗 Tabs 分類與整潔度</h2>
+        <div id="tabsSummary" class="list"></div>
+      </section>
+
+      <section class="card">
+        <h2>📝 Worklog 關鍵字</h2>
+        <div id="worklogKeywords" class="keyword-cloud"></div>
+      </section>
+
+      <section class="card span-2">
+        <h2>📈 Trading 訊號</h2>
+        <div id="tradingSignals" class="list"></div>
+      </section>
+
+      <section class="card span-2">
+        <h2>🎯 下週 Top 3 建議</h2>
+        <div id="nextTop3" class="top3"></div>
+      </section>
+
+      <section class="card span-2">
+        <h2>🧠 手動復盤筆記</h2>
+        <div class="notes-grid">
+          <label>
+            本週做得好的事
+            <textarea id="winsInput" placeholder="例如：完成某個 bug 修正、建立穩定流程、減少分頁堆積..."></textarea>
+          </label>
+          <label>
+            本週卡住 / 沒完成的原因
+            <textarea id="blockersInput" placeholder="例如：P1 太多、分頁過量、任務沒有拆小、交易訊號不明確..."></textarea>
+          </label>
+          <label>
+            下週調整策略
+            <textarea id="improvementsInput" placeholder="例如：每天只保留 3 個 P1、分頁超過 80 要清理、盤後固定復盤..."></textarea>
+          </label>
+          <label>
+            下週 Top 3 手動覆蓋（每行一項，可留空使用自動建議）
+            <textarea id="manualTop3Input" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea>
+          </label>
+        </div>
+      </section>
+
+      <section class="card span-2">
+        <h2>🧾 原始資料偵測</h2>
+        <pre id="rawDataSummary" class="raw-box"></pre>
+      </section>
+    </main>
+  </div>
+
+  <script src="weekly_review.js"></script>
+</body>
+</html>

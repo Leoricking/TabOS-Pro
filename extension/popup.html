@@ -14,6 +14,7 @@
 
     <section>
       <h2>1. 新備份</h2>
+      <p class="hint">備份目前瀏覽器內所有一般分頁，適合一次整理整個工作區。</p>
       <button id="backupBtn" class="primary">備份目前所有分頁</button>
 
       <label class="check">
@@ -23,9 +24,10 @@
     </section>
 
     <section>
-      <h2>2. 合併舊 HTML + 目前分頁</h2>
+      <h2>2. 合併舊 HTML + 目前所有分頁</h2>
+      <p class="hint">這裡是「全部目前分頁」，不是單筆。會讀舊 HTML 後，把目前開著的所有一般分頁合併進去。</p>
       <input type="file" id="mergeFile" accept=".html,.htm" />
-      <button id="mergeBtn">合併目前分頁並匯出新版 HTML</button>
+      <button id="mergeBtn">合併目前所有分頁並匯出新版 HTML</button>
 
       <label class="check">
         <input type="checkbox" id="closeAfterMerge" />
@@ -34,31 +36,76 @@
     </section>
 
     <section>
-      <h2>3. 舊版轉新版</h2>
+      <h2>3. 單筆加入 HTML</h2>
+      <p class="hint">只處理目前這一頁，或手動輸入一筆 URL / 標題。外掛不會直接改硬碟舊檔，而是匯出新版 HTML。</p>
+
+      <div class="sub-block">
+        <h3>3-1. 目前這一頁</h3>
+        <button id="backupActiveTabBtn" class="primary">只備份目前這一頁</button>
+        <input type="file" id="mergeSingleFile" accept=".html,.htm" />
+        <button id="mergeActiveTabBtn">把目前這一頁加入舊 HTML 並匯出新版</button>
+        <label class="check">
+          <input type="checkbox" id="closeAfterSingleMerge" />
+          單筆加入後關閉目前這一頁
+        </label>
+      </div>
+
+      <div class="sub-block">
+        <h3>3-2. 手動輸入單筆</h3>
+        <input type="url" id="manualUrl" class="text-input" placeholder="URL，例如：https://example.com/article" />
+        <input type="text" id="manualTitle" class="text-input" placeholder="標題，例如：這篇文章之後要讀" />
+        <div class="inline-grid">
+          <select id="manualPriority">
+            <option value="P3">P3</option>
+            <option value="P2">P2</option>
+            <option value="P1">P1</option>
+          </select>
+          <select id="manualStatus">
+            <option value="待看">待看</option>
+            <option value="重要">重要</option>
+            <option value="工作">工作</option>
+            <option value="深度閱讀">深度閱讀</option>
+          </select>
+        </div>
+        <input type="text" id="manualTags" class="text-input" placeholder="tags，可用逗號分隔，例如：AI, research, todo" />
+        <button id="manualExportBtn" class="primary">手動單筆匯出新 HTML</button>
+        <input type="file" id="manualMergeFile" accept=".html,.htm" />
+        <button id="manualMergeBtn">手動單筆加入舊 HTML 並匯出新版</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. 舊版轉新版</h2>
       <input type="file" id="convertFile" accept=".html,.htm" />
       <button id="convertBtn">轉成新版可管理 HTML</button>
     </section>
 
     <section>
-      <h2>4. Daily Planner</h2>
+      <h2>5. Daily Planner</h2>
       <button id="openPlannerBtn" class="primary">開啟每日行程 / 待辦 Planner</button>
     </section>
 
     <section>
-      <h2>5. Trading Mode</h2>
+      <h2>6. Weekly Review</h2>
+      <button id="openWeeklyReviewBtn" class="primary">開啟每週復盤 / 下週 Top 3</button>
+    </section>
+
+    <section>
+      <h2>7. Trading Mode</h2>
       <button id="openTradingBtn" class="primary">開啟台股自選股 / 操作策略</button>
     </section>
 
     <section>
-      <h2>6. Sync Center</h2>
+      <h2>8. Sync Center</h2>
       <button id="openSyncBtn" class="primary">開啟資料同步中心</button>
     </section>
 
     <section>
       <h2>Pro 功能</h2>
       <div class="pro-list">
-        <div>✅ Tabs：備份 / 合併 / 去重 / 分類 / 標記</div>
+        <div>✅ Tabs：備份 / 合併 / 單筆加入 / 去重 / 分類 / 標記</div>
         <div>✅ Planner：每日任務 / 行程 / Tabs / Worklog</div>
+        <div>✅ Weekly Review：每週復盤 / Tab Clean Score / 下週 Top 3</div>
         <div>✅ Trading：當沖 / 短線 / 中線 / 長線策略分析</div>
         <div>✅ Sync：手動 JSON / GitHub Gist 遠端同步</div>
         <div>✅ P1 / P2 / P3：交易與任務優先級</div>
