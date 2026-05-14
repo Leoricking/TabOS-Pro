@@ -1,4 +1,26 @@
 const SYNC_SETTINGS_KEY = "tabs_manager_pro_sync_settings";
+const AUTO_SESSION_STORAGE_KEYS = [
+  "tabs_manager_pro_auto_session_v1",
+  "tabs_manager_pro_auto_session_history_v1",
+  "tabs_manager_pro_auto_session_settings_v1"
+];
+const CURATED_STORAGE_KEYS = [
+  "tabs_manager_pro_curated_tabs_v1"
+];
+
+const APP_DATA_STORAGE_KEYS = [
+  "tabs_manager_pro_planner_v2",
+  "tabs_manager_pro_planner_v2__json",
+  "tabs_manager_pro_planner_v2__mirrored_at",
+  "tabs_manager_pro_weekly_review_v1",
+  "tabs_manager_pro_weekly_review_v1__json",
+  "tabs_manager_pro_weekly_review_v1__mirrored_at",
+  "tabs_manager_pro_trading_v3",
+  "tabs_manager_pro_trading_v3__json",
+  "tabs_manager_pro_trading_v3__mirrored_at",
+  "tabs_manager_pro_trading_api_endpoint",
+  "tabs_manager_pro_trading_api_endpoint__mirrored_at"
+];
 
 const KEY_GROUPS = {
   planner: [
@@ -12,7 +34,8 @@ const KEY_GROUPS = {
     "tabs_manager_pro_trading_v2",
     "tabs_manager_pro_trading_v1"
   ],
-  tabs: []
+  tabs: [],
+  curated: []
 };
 
 function getAllLocalStorageKeys() {
@@ -23,7 +46,10 @@ function detectTabsKeys() {
   return getAllLocalStorageKeys().filter(key =>
     key.startsWith("tabs_manager_pro_tabs") ||
     key.startsWith("tabs_manager_pro_merged") ||
-    key.startsWith("tabs_manager_pro_converted")
+    key.startsWith("tabs_manager_pro_converted") ||
+    key.startsWith("tabs_manager_pro_single") ||
+    key.startsWith("tabs_manager_pro_manual_single") ||
+    key.startsWith("tabs_manager_pro_auto_session")
   );
 }
 
@@ -32,6 +58,8 @@ function keysForMode(mode) {
   if (mode === "weekly_review") return KEY_GROUPS.weekly_review;
   if (mode === "trading") return KEY_GROUPS.trading;
   if (mode === "tabs") return detectTabsKeys();
+  if (mode === "curated") return [];
+  if (mode === "auto_session") return [];
 
   return [
     ...KEY_GROUPS.planner,
@@ -41,7 +69,65 @@ function keysForMode(mode) {
   ];
 }
 
-function buildBackupPackage(mode = "all") {
+function isTabOSStorageKey(key) {
+  return String(key || "").startsWith("tabs_manager_pro_");
+}
+
+function shouldIncludeAppDataStorage(mode) {
+  return mode === "all" || mode === "planner" || mode === "weekly_review" || mode === "trading";
+}
+
+function storageKeysForMode(mode, allChromeStorage = {}) {
+  if (mode === "all") {
+    return Object.keys(allChromeStorage).filter(isTabOSStorageKey).sort();
+  }
+
+  if (mode === "planner") {
+    return APP_DATA_STORAGE_KEYS.filter(key => key.startsWith("tabs_manager_pro_planner"));
+  }
+
+  if (mode === "weekly_review") {
+    return APP_DATA_STORAGE_KEYS.filter(key => key.startsWith("tabs_manager_pro_weekly_review"));
+  }
+
+  if (mode === "trading") {
+    return APP_DATA_STORAGE_KEYS.filter(key => key.startsWith("tabs_manager_pro_trading"));
+  }
+
+  if (mode === "auto_session") return AUTO_SESSION_STORAGE_KEYS;
+  if (mode === "curated") return CURATED_STORAGE_KEYS;
+  return [];
+}
+
+function shouldIncludeAutoSession(mode) {
+  return mode === "all" || mode === "auto_session";
+}
+
+function shouldIncludeCurated(mode) {
+  return mode === "all" || mode === "curated";
+}
+
+function getChromeStorage(keys) {
+  return new Promise(resolve => {
+    if (!chrome.storage || !chrome.storage.local) {
+      resolve({});
+      return;
+    }
+    chrome.storage.local.get(keys, resolve);
+  });
+}
+
+function setChromeStorage(values) {
+  return new Promise(resolve => {
+    if (!chrome.storage || !chrome.storage.local) {
+      resolve();
+      return;
+    }
+    chrome.storage.local.set(values, resolve);
+  });
+}
+
+async function buildBackupPackage(mode = "all") {
   const keys = keysForMode(mode);
   const data = {};
 
@@ -52,24 +138,50 @@ function buildBackupPackage(mode = "all") {
     }
   }
 
+  const allChromeStorage = await getChromeStorage(null);
+  const storage = {};
+  const storageKeys = storageKeysForMode(mode, allChromeStorage);
+
+  for (const key of storageKeys) {
+    if (allChromeStorage[key] !== undefined) {
+      storage[key] = allChromeStorage[key];
+    }
+  }
+
   return {
     app: "Tabs Manager Pro",
-    version: "1.0",
+    version: "1.3-storage-hardening",
     exportedAt: new Date().toISOString(),
     mode,
-    data
+    data,
+    storage
   };
 }
 
-function restoreBackupPackage(pkg) {
-  if (!pkg || typeof pkg !== "object" || !pkg.data) {
+async function restoreBackupPackage(pkg) {
+  if (!pkg || typeof pkg !== "object") {
     throw new Error("同步檔格式錯誤");
   }
 
-  for (const [key, value] of Object.entries(pkg.data)) {
+  const data = pkg.data || {};
+  for (const [key, value] of Object.entries(data)) {
     localStorage.setItem(key, value);
   }
+
+  if (pkg.storage && typeof pkg.storage === "object") {
+    const storageValues = {};
+    for (const [key, value] of Object.entries(pkg.storage)) {
+      if (isTabOSStorageKey(key)) {
+        storageValues[key] = value;
+      }
+    }
+
+    if (Object.keys(storageValues).length > 0) {
+      await setChromeStorage(storageValues);
+    }
+  }
 }
+
 
 function downloadJson(obj, filename) {
   const blob = new Blob([JSON.stringify(obj, null, 2)], {
@@ -143,17 +255,23 @@ function setGistStatus(text) {
   document.getElementById("gistStatus").textContent = text;
 }
 
-function renderLocalSummary() {
+async function renderLocalSummary() {
   const planner = localStorage.getItem("tabs_manager_pro_planner_v2");
   const weeklyReview = localStorage.getItem("tabs_manager_pro_weekly_review_v1");
   const tradingV3 = localStorage.getItem("tabs_manager_pro_trading_v3");
   const tradingV2 = localStorage.getItem("tabs_manager_pro_trading_v2");
   const tradingV1 = localStorage.getItem("tabs_manager_pro_trading_v1");
   const tabsKeys = detectTabsKeys();
+  const extensionStorage = await getChromeStorage(null);
+  const autoSession = extensionStorage.tabs_manager_pro_auto_session_v1;
+  const autoHistory = extensionStorage.tabs_manager_pro_auto_session_history_v1;
+  const curatedTabs = extensionStorage.tabs_manager_pro_curated_tabs_v1;
 
   let plannerInfo = "無";
   let weeklyReviewInfo = "無";
   let tradingInfo = "無";
+  let autoSessionInfo = "無";
+  let curatedInfo = "無";
 
   try {
     if (planner) {
@@ -183,14 +301,44 @@ function renderLocalSummary() {
     tradingInfo = "讀取失敗";
   }
 
+  try {
+    if (autoSession) {
+      autoSessionInfo = `${autoSession.tabCount || 0} 個分頁 / ${autoSession.windowCount || 0} 個視窗 / ${autoSession.savedAt || "無時間"}`;
+      if (Array.isArray(autoHistory)) {
+        autoSessionInfo += ` / 歷史 ${autoHistory.length} 份`;
+      }
+    }
+  } catch {
+    autoSessionInfo = "讀取失敗";
+  }
+
+  try {
+    if (Array.isArray(curatedTabs)) {
+      const p1 = curatedTabs.filter(item => item.priority === "P1").length;
+      const deep = curatedTabs.filter(item => item.status === "深度閱讀").length;
+      curatedInfo = `${curatedTabs.length} 筆 / P1 ${p1} / 深度閱讀 ${deep}`;
+    }
+  } catch {
+    curatedInfo = "讀取失敗";
+  }
+
+  const selectedMode = document.getElementById("syncModeInput").value;
+  const localKeys = keysForMode(selectedMode);
+  const storageKeys = storageKeysForMode(selectedMode, extensionStorage);
+
   document.getElementById("localSummary").textContent = [
     `Planner：${plannerInfo}`,
     `Weekly Review：${weeklyReviewInfo}`,
     `Trading：${tradingInfo}`,
     `Tabs keys：${tabsKeys.length}`,
+    `Curated Tabs：${curatedInfo}`,
+    `Auto Session Backup：${autoSessionInfo}`,
     "",
-    "同步會備份以下 key：",
-    ...keysForMode(document.getElementById("syncModeInput").value).map(k => `- ${k}`)
+    "同步會備份以下 localStorage key：",
+    ...(localKeys.length ? localKeys.map(k => `- ${k}`) : ["- 無"]),
+    "",
+    "同步會備份以下 chrome.storage key：",
+    ...(storageKeys.length ? storageKeys.map(k => `- ${k}`) : ["- 無"])
   ].join("\n");
 }
 
@@ -205,7 +353,7 @@ async function uploadToGist() {
     return;
   }
 
-  const pkg = buildBackupPackage(mode);
+  const pkg = await buildBackupPackage(mode);
   const content = JSON.stringify(pkg, null, 2);
 
   setGistStatus("正在上傳到 GitHub Gist...");
@@ -307,16 +455,20 @@ async function downloadFromGist() {
   const content = data.files[filename].content;
   const pkg = JSON.parse(content);
 
-  restoreBackupPackage(pkg);
-  renderLocalSummary();
+  await restoreBackupPackage(pkg);
+  await renderLocalSummary();
 
   setGistStatus("已從 Gist 下載並還原。\n時間：" + new Date().toLocaleString("zh-TW"));
 }
 
-document.getElementById("exportAllBtn").addEventListener("click", () => {
-  const mode = document.getElementById("syncModeInput").value;
-  const pkg = buildBackupPackage(mode);
-  downloadJson(pkg, "tabs_manager_pro_sync_backup.json");
+document.getElementById("exportAllBtn").addEventListener("click", async () => {
+  try {
+    const mode = document.getElementById("syncModeInput").value;
+    const pkg = await buildBackupPackage(mode);
+    downloadJson(pkg, "tabs_manager_pro_sync_backup.json");
+  } catch (error) {
+    alert(error.message);
+  }
 });
 
 document.getElementById("importAllInput").addEventListener("change", async e => {
@@ -326,17 +478,17 @@ document.getElementById("importAllInput").addEventListener("change", async e => 
   try {
     const text = await readFile(file);
     const pkg = JSON.parse(text);
-    restoreBackupPackage(pkg);
-    renderLocalSummary();
+    await restoreBackupPackage(pkg);
+    await renderLocalSummary();
     alert("已匯入同步資料");
   } catch (error) {
     alert(error.message);
   }
 });
 
-document.getElementById("saveSettingsBtn").addEventListener("click", () => {
+document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
   saveSettings();
-  renderLocalSummary();
+  await renderLocalSummary();
 });
 
 document.getElementById("clearSettingsBtn").addEventListener("click", clearSettings);
@@ -357,7 +509,9 @@ document.getElementById("downloadGistBtn").addEventListener("click", async () =>
   }
 });
 
-document.getElementById("syncModeInput").addEventListener("change", renderLocalSummary);
+document.getElementById("syncModeInput").addEventListener("change", () => {
+  renderLocalSummary();
+});
 
 applySettings();
 renderLocalSummary();

@@ -5,10 +5,13 @@
     "description":  "Backup, merge, manage browser tabs and worklogs as a local knowledge OS.",
     "permissions":  [
                         "tabs",
-                        "downloads"
+                        "downloads",
+                        "storage",
+                        "alarms",
+                        "contextMenus"
                     ],
     "host_permissions":  [
-                             "\u003call_urls\u003e"
+                             "<all_urls>"
                          ],
     "action":  {
                    "default_title":  "TabOS",

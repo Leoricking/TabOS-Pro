@@ -5,10 +5,12 @@ const TRADING_KEYS = [
   "tabs_manager_pro_trading_v2",
   "tabs_manager_pro_trading_v1"
 ];
+const CURATED_TABS_KEY = "tabs_manager_pro_curated_tabs_v1";
 
 let currentWeekStart = getWeekStartString(new Date());
 let currentReport = null;
 let savedReviews = loadSavedReviews();
+let curatedTabsCache = [];
 
 function pad2(n) {
   return String(n).padStart(2, "0");
@@ -61,12 +63,108 @@ function safeJsonParse(raw, fallback) {
   }
 }
 
+function getChromeStorage(keys) {
+  return new Promise(resolve => {
+    if (!chrome.storage || !chrome.storage.local) {
+      resolve({});
+      return;
+    }
+    chrome.storage.local.get(keys, resolve);
+  });
+}
+
+async function loadCuratedTabs() {
+  const data = await getChromeStorage([CURATED_TABS_KEY]);
+  curatedTabsCache = Array.isArray(data[CURATED_TABS_KEY]) ? data[CURATED_TABS_KEY] : [];
+  return curatedTabsCache;
+}
+
 function loadSavedReviews() {
   return safeJsonParse(localStorage.getItem(REVIEW_STORAGE_KEY), {});
 }
 
+function chromeStorageGet(keys) {
+  return new Promise(resolve => {
+    if (!chrome.storage || !chrome.storage.local) {
+      resolve({});
+      return;
+    }
+    chrome.storage.local.get(keys, resolve);
+  });
+}
+
+function chromeStorageSet(values) {
+  return new Promise(resolve => {
+    if (!chrome.storage || !chrome.storage.local) {
+      resolve();
+      return;
+    }
+    chrome.storage.local.set(values, resolve);
+  });
+}
+
 function saveSavedReviews() {
-  localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(savedReviews));
+  const serialized = JSON.stringify(savedReviews);
+  localStorage.setItem(REVIEW_STORAGE_KEY, serialized);
+  chromeStorageSet({
+    [REVIEW_STORAGE_KEY]: serialized,
+    [REVIEW_STORAGE_KEY + "__json"]: savedReviews,
+    [REVIEW_STORAGE_KEY + "__mirrored_at"]: new Date().toISOString()
+  }).catch(error => console.warn("Weekly Review chrome.storage mirror failed", error));
+}
+
+async function hydrateWeeklyReviewFromChromeStorage() {
+  try {
+    const localRaw = localStorage.getItem(REVIEW_STORAGE_KEY);
+    if (localRaw && localRaw !== "{}") {
+      await chromeStorageSet({
+        [REVIEW_STORAGE_KEY]: localRaw,
+        [REVIEW_STORAGE_KEY + "__json"]: savedReviews,
+        [REVIEW_STORAGE_KEY + "__mirrored_at"]: new Date().toISOString()
+      });
+      return;
+    }
+
+    const data = await chromeStorageGet([REVIEW_STORAGE_KEY, REVIEW_STORAGE_KEY + "__json"]);
+    const raw = data[REVIEW_STORAGE_KEY];
+    const obj = data[REVIEW_STORAGE_KEY + "__json"];
+
+    if (raw) {
+      savedReviews = JSON.parse(raw);
+      localStorage.setItem(REVIEW_STORAGE_KEY, raw);
+      render();
+      return;
+    }
+
+    if (obj && typeof obj === "object") {
+      savedReviews = obj;
+      localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(savedReviews));
+      render();
+    }
+  } catch (error) {
+    console.warn("Weekly Review chrome.storage hydrate failed", error);
+  }
+}
+
+
+async function hydrateReadableAppDataFromChromeStorage() {
+  try {
+    const keys = [
+      PLANNER_KEY,
+      REVIEW_STORAGE_KEY,
+      ...TRADING_KEYS
+    ];
+    const data = await chromeStorageGet(keys);
+
+    for (const key of keys) {
+      if (localStorage.getItem(key)) continue;
+      if (data[key] !== undefined && data[key] !== null) {
+        localStorage.setItem(key, typeof data[key] === "string" ? data[key] : JSON.stringify(data[key]));
+      }
+    }
+  } catch (error) {
+    console.warn("Weekly Review app data hydrate failed", error);
+  }
 }
 
 function loadPlanner() {
@@ -185,6 +283,28 @@ function extractWorklogsFromStorage() {
   }
 
   return result;
+}
+
+function extractCuratedTabsFromStorage() {
+  return normalizeArray(curatedTabsCache).map(item => ({
+    id: item.id || "",
+    title: item.title || item.url || "未命名精選",
+    url: item.url || "",
+    priority: item.priority || "P3",
+    status: item.status || "待看",
+    tags: normalizeArray(item.tags),
+    note: item.note || item.selectionText || "",
+    createdAt: item.createdAt || "",
+    source: item.source || "CURATED"
+  }));
+}
+
+function isDateInWeek(isoText, weekStart, weekEnd) {
+  if (!isoText) return false;
+  const date = new Date(isoText);
+  if (Number.isNaN(date.getTime())) return false;
+  const local = getLocalDateString(date);
+  return local >= weekStart && local <= weekEnd;
 }
 
 function toNumber(value) {
@@ -307,7 +427,7 @@ function countBy(items, getter) {
   return [...map.entries()].sort((a, b) => b[1] - a[1]);
 }
 
-function calculateCleanScore({ tabs, plannerWeek, unfinishedP1 }) {
+function calculateCleanScore({ tabs, plannerWeek, unfinishedP1, curatedTabs }) {
   let score = 100;
   const totalTabs = tabs.length + plannerWeek.tabs.length;
   const noCategoryTabs = tabs.filter(t => !t.category || t.category === "未分類").length;
@@ -316,8 +436,9 @@ function calculateCleanScore({ tabs, plannerWeek, unfinishedP1 }) {
   const volumePenalty = totalTabs > 120 ? 25 : totalTabs > 80 ? 15 : totalTabs > 50 ? 8 : 0;
   const uncategorizedPenalty = Math.min(20, noCategoryTabs * 2);
   const unreadPenalty = Math.min(15, unreadTabs);
+  const curatedP1Penalty = Math.min(10, normalizeArray(curatedTabs).filter(item => item.priority === "P1" && item.status !== "已完成").length * 2);
 
-  score -= p1Penalty + volumePenalty + uncategorizedPenalty + unreadPenalty;
+  score -= p1Penalty + volumePenalty + uncategorizedPenalty + unreadPenalty + curatedP1Penalty;
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
@@ -330,6 +451,11 @@ function buildNextTop3(report) {
 
   for (const item of p1) {
     suggestions.push(`完成 P1：${item.title || "未命名任務"}`);
+  }
+
+  const topCurated = report.curatedThisWeek.find(item => item.priority === "P1") || report.curatedThisWeek.find(item => item.status === "深度閱讀");
+  if (topCurated) {
+    suggestions.push(`深度閱讀精選：${topCurated.title || "未命名精選"}`);
   }
 
   const riskTrading = report.tradingSignals.find(x => x.risk);
@@ -377,6 +503,8 @@ function generateReport() {
   const worklogs = [...plannerWeek.worklogs, ...storageWorklogs];
   const trading = loadTrading();
   const tradingSignals = extractTradingSignals(trading.stocks);
+  const curatedTabs = extractCuratedTabsFromStorage();
+  const curatedThisWeek = curatedTabs.filter(item => isDateInWeek(item.createdAt, weekStart, weekEnd));
 
   const completedTasks = plannerWeek.tasks.filter(task => task.status === "done");
   const unfinishedTasks = plannerWeek.tasks.filter(task => task.status !== "done");
@@ -388,12 +516,14 @@ function generateReport() {
     ...plannerWeek.focus.map(x => `${x.title || x.text || ""}`),
     ...worklogs.map(x => `${x.category || ""} ${x.text || x.title || x.content || ""}`),
     ...plannerWeek.notes.map(x => x.text || ""),
-    ...tradingSignals.map(x => `${x.symbol} ${x.name} ${x.message}`)
+    ...tradingSignals.map(x => `${x.symbol} ${x.name} ${x.message}`),
+    ...curatedTabs.map(x => `${x.title || ""} ${x.priority || ""} ${x.status || ""} ${normalizeArray(x.tags).join(" ")} ${x.note || ""}`)
   ];
 
   const keywords = buildKeywordMap(textList);
   const tabCategories = countBy([...tabs, ...plannerWeek.tabs], item => item.category || item.group || "未分類");
-  const cleanScore = calculateCleanScore({ tabs, plannerWeek, unfinishedP1 });
+  const curatedByStatus = countBy(curatedTabs, item => item.status || "待看");
+  const cleanScore = calculateCleanScore({ tabs, plannerWeek, unfinishedP1, curatedTabs });
 
   const report = {
     weekStart,
@@ -404,6 +534,9 @@ function generateReport() {
     worklogs,
     tradingKey: trading.key,
     tradingSignals,
+    curatedTabs,
+    curatedThisWeek,
+    curatedByStatus,
     completedTasks,
     unfinishedTasks,
     unfinishedP1,
@@ -416,6 +549,7 @@ function generateReport() {
       weeklyReview: localStorage.getItem(REVIEW_STORAGE_KEY) ? [REVIEW_STORAGE_KEY] : [],
       trading: trading.key ? [trading.key] : [],
       tabs: detectTabsKeys(),
+      curated: curatedTabs.length ? [CURATED_TABS_KEY] : [],
       worklog: detectWorklogKeys()
     }
   };
@@ -447,7 +581,7 @@ function renderReport(report) {
   document.getElementById("cleanScore").textContent = String(report.cleanScore);
 
   const badge = document.getElementById("dataHealthBadge");
-  const hasData = report.plannerWeek.tasks.length || report.tabs.length || report.worklogs.length || report.tradingSignals.length;
+  const hasData = report.plannerWeek.tasks.length || report.tabs.length || report.worklogs.length || report.tradingSignals.length || report.curatedTabs.length;
   badge.textContent = hasData ? "已讀取本機資料" : "目前沒有偵測到資料";
   badge.className = `badge ${hasData ? "good" : "warn"}`;
 
@@ -458,6 +592,8 @@ function renderReport(report) {
     renderMetric("本週行程", report.plannerWeek.schedules.length),
     renderMetric("Planner Tabs", report.plannerWeek.tabs.length),
     renderMetric("Managed Tabs", report.tabs.length),
+    renderMetric("精選卡片", report.curatedTabs.length),
+    renderMetric("本週精選", report.curatedThisWeek.length),
     renderMetric("Worklog", report.worklogs.length),
     renderMetric("Trading", report.tradingSignals.length)
   ].join("");
@@ -483,6 +619,14 @@ function renderReport(report) {
     </div>
   `);
   document.getElementById("tabsSummary").innerHTML = tabRows.length ? tabRows.join("") : `<div class="empty">尚未偵測到 Tabs 管理頁 localStorage。若 managed HTML 是 file:// 開啟，該頁的 localStorage 不一定會出現在 extension 內。</div>`;
+
+  renderList("curatedSummary", report.curatedTabs.slice(0, 20), item => `
+    <div class="item">
+      <div class="item-title">${escapeHtml(item.title)}</div>
+      <div class="item-meta">${escapeHtml(item.priority)} · ${escapeHtml(item.status)} · ${escapeHtml(normalizeArray(item.tags).join(", "))}</div>
+      <div class="item-meta">${escapeHtml(item.note || "").slice(0, 180)}</div>
+    </div>
+  `, "尚未有 TabOS 精選資料。可在網頁右鍵選「加入 TabOS 精選待看」。");
 
   document.getElementById("worklogKeywords").innerHTML = report.keywords.length
     ? report.keywords.map(k => `<span class="keyword">${escapeHtml(k.word)} <small>${k.count}</small></span>`).join("")
@@ -513,6 +657,8 @@ function renderReport(report) {
       plannerTasks: report.plannerWeek.tasks.length,
       plannerTabs: report.plannerWeek.tabs.length,
       managedTabs: report.tabs.length,
+      curatedTabs: report.curatedTabs.length,
+      curatedThisWeek: report.curatedThisWeek.length,
       worklogs: report.worklogs.length,
       tradingSignals: report.tradingSignals.length,
       savedWeeklyReviews: Object.keys(savedReviews).length
@@ -538,24 +684,26 @@ function readReviewInputs() {
   };
 }
 
-function saveCurrentReview() {
+async function saveCurrentReview() {
   savedReviews[currentWeekStart] = {
     ...(savedReviews[currentWeekStart] || {}),
     ...readReviewInputs()
   };
   saveSavedReviews();
-  generateAndRender();
+  await generateAndRender();
   alert("已儲存本週復盤筆記。Sync Center 可同步 weekly review localStorage。 ");
 }
 
-function setWeekStart(weekStart) {
+async function setWeekStart(weekStart) {
   currentWeekStart = getWeekStartString(parseLocalDate(weekStart));
   document.getElementById("weekStartInput").value = currentWeekStart;
   loadReviewToInputs(currentWeekStart);
-  generateAndRender();
+  await generateAndRender();
 }
 
-function generateAndRender() {
+async function generateAndRender() {
+  await hydrateReadableAppDataFromChromeStorage();
+  await loadCuratedTabs();
   const report = generateReport();
   renderReport(report);
 }
@@ -594,6 +742,7 @@ function buildExportHtml(report) {
         <div class="metric"><span>完成任務</span><strong>${report.completedTasks.length}</strong></div>
         <div class="metric"><span>未完成 P1</span><strong>${report.unfinishedP1.length}</strong></div>
         <div class="metric"><span>Trading</span><strong>${report.tradingSignals.length}</strong></div>
+        <div class="metric"><span>精選卡片</span><strong>${report.curatedTabs.length}</strong></div>
       </div>
     </section>
 
@@ -617,6 +766,11 @@ function buildExportHtml(report) {
     <section class="card">
       <h2>Tabs 分類</h2>
       ${report.tabCategories.length ? report.tabCategories.map(([name, count]) => `<div class="item"><strong>${escapeHtml(name)}</strong><div class="meta">${count} 個分頁</div></div>`).join("") : "<p>無</p>"}
+    </section>
+
+    <section class="card">
+      <h2>TabOS 精選知識卡</h2>
+      ${report.curatedTabs.length ? report.curatedTabs.map(item => `<div class="item"><strong>${escapeHtml(item.title)}</strong><div class="meta">${escapeHtml(item.priority)} · ${escapeHtml(item.status)} · ${escapeHtml(normalizeArray(item.tags).join(", "))}</div><div>${escapeHtml(item.note || "").slice(0, 300)}</div></div>`).join("") : "<p>無</p>"}
     </section>
 
     <section class="card">
@@ -682,11 +836,12 @@ function bindEvents() {
   });
 }
 
-function init() {
+async function init() {
   document.getElementById("weekStartInput").value = currentWeekStart;
   bindEvents();
+  await hydrateWeeklyReviewFromChromeStorage();
   loadReviewToInputs(currentWeekStart);
-  generateAndRender();
+  await generateAndRender();
 }
 
 if (document.readyState === "loading") {

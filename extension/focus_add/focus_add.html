@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>加入 TabOS 精選</title>
+  <link rel="stylesheet" href="focus_add.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>加入 TabOS 精選</h1>
+        <p>把真正重要的頁面存成長期知識卡片，支援 Weekly Review 與 Sync。</p>
+      </div>
+      <span id="modeBadge" class="badge">Curated</span>
+    </header>
+
+    <main>
+      <label>
+        標題
+        <input id="titleInput" type="text" placeholder="頁面標題" />
+      </label>
+
+      <label>
+        URL
+        <input id="urlInput" type="url" placeholder="https://..." />
+      </label>
+
+      <section class="field-group">
+        <div class="group-title">Priority</div>
+        <div class="button-group" data-field="priority">
+          <button type="button" data-value="P1">P1</button>
+          <button type="button" data-value="P2">P2</button>
+          <button type="button" data-value="P3" class="active">P3</button>
+        </div>
+      </section>
+
+      <section class="field-group">
+        <div class="group-title">Status</div>
+        <div class="button-group status-group" data-field="status">
+          <button type="button" data-value="待看" class="active">待看</button>
+          <button type="button" data-value="重要">重要</button>
+          <button type="button" data-value="工作">工作</button>
+          <button type="button" data-value="深度閱讀">深度閱讀</button>
+        </div>
+      </section>
+
+      <label>
+        Tags
+        <input id="tagsInput" type="text" placeholder="例如：IOWN, Work, AI，可用逗號分隔" />
+      </label>
+
+      <label>
+        Note / 選取文字
+        <textarea id="noteInput" placeholder="可輸入備註。若你在頁面選取文字後按右鍵，會自動帶入這裡。"></textarea>
+      </label>
+
+      <div id="sourceInfo" class="source-info">正在讀取頁面資料...</div>
+    </main>
+
+    <footer>
+      <button id="saveBtn" class="primary">儲存到 TabOS 精選</button>
+      <button id="saveAndCloseBtn" class="success">儲存並關閉</button>
+      <button id="cancelBtn">取消</button>
+    </footer>
+
+    <div id="status" class="status">等待操作</div>
+  </div>
+
+  <script src="focus_add.js"></script>
+</body>
+</html>

@@ -55,8 +55,69 @@ function loadStocks() {
   return [];
 }
 
+function chromeStorageGet(keys) {
+  return new Promise(resolve => {
+    if (!chrome.storage || !chrome.storage.local) {
+      resolve({});
+      return;
+    }
+    chrome.storage.local.get(keys, resolve);
+  });
+}
+
+function chromeStorageSet(values) {
+  return new Promise(resolve => {
+    if (!chrome.storage || !chrome.storage.local) {
+      resolve();
+      return;
+    }
+    chrome.storage.local.set(values, resolve);
+  });
+}
+
 function saveStocks() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(stocks));
+  const serialized = JSON.stringify(stocks);
+  localStorage.setItem(STORAGE_KEY, serialized);
+  chromeStorageSet({
+    [STORAGE_KEY]: serialized,
+    [STORAGE_KEY + "__json"]: stocks,
+    [STORAGE_KEY + "__mirrored_at"]: new Date().toISOString()
+  }).catch(error => console.warn("Trading chrome.storage mirror failed", error));
+}
+
+async function hydrateTradingFromChromeStorage() {
+  try {
+    const localRaw = localStorage.getItem(STORAGE_KEY);
+    if (localRaw) {
+      await chromeStorageSet({
+        [STORAGE_KEY]: localRaw,
+        [STORAGE_KEY + "__json"]: stocks,
+        [STORAGE_KEY + "__mirrored_at"]: new Date().toISOString()
+      });
+      return;
+    }
+
+    const data = await chromeStorageGet([STORAGE_KEY, STORAGE_KEY + "__json"]);
+    const raw = data[STORAGE_KEY];
+    const obj = data[STORAGE_KEY + "__json"];
+
+    if (raw) {
+      stocks = JSON.parse(raw).map(migrateStock);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stocks));
+      selectedId = stocks[0]?.id || null;
+      render();
+      return;
+    }
+
+    if (Array.isArray(obj)) {
+      stocks = obj.map(migrateStock);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stocks));
+      selectedId = stocks[0]?.id || null;
+      render();
+    }
+  } catch (error) {
+    console.warn("Trading chrome.storage hydrate failed", error);
+  }
 }
 
 function getApiEndpoint() {
@@ -67,6 +128,10 @@ function saveApiEndpoint() {
   const input = document.getElementById("apiEndpointInput");
   const value = (input.value || "http://127.0.0.1:8787").replace(/\/+$/, "");
   localStorage.setItem(API_ENDPOINT_KEY, value);
+  chromeStorageSet({
+    [API_ENDPOINT_KEY]: value,
+    [API_ENDPOINT_KEY + "__mirrored_at"]: new Date().toISOString()
+  }).catch(error => console.warn("Trading API endpoint mirror failed", error));
   input.value = value;
   setApiMessage("API Endpoint 已儲存：" + value);
 }
@@ -1378,4 +1443,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   render();
+  hydrateTradingFromChromeStorage();
 });

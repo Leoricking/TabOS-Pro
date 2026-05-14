@@ -59,8 +59,67 @@ function loadPlanner() {
   }
 }
 
+function chromeStorageGet(keys) {
+  return new Promise(resolve => {
+    if (!chrome.storage || !chrome.storage.local) {
+      resolve({});
+      return;
+    }
+    chrome.storage.local.get(keys, resolve);
+  });
+}
+
+function chromeStorageSet(values) {
+  return new Promise(resolve => {
+    if (!chrome.storage || !chrome.storage.local) {
+      resolve();
+      return;
+    }
+    chrome.storage.local.set(values, resolve);
+  });
+}
+
 function savePlanner() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(planner));
+  const serialized = JSON.stringify(planner);
+  localStorage.setItem(STORAGE_KEY, serialized);
+  chromeStorageSet({
+    [STORAGE_KEY]: serialized,
+    [STORAGE_KEY + "__json"]: planner,
+    [STORAGE_KEY + "__mirrored_at"]: new Date().toISOString()
+  }).catch(error => console.warn("Planner chrome.storage mirror failed", error));
+}
+
+async function hydratePlannerFromChromeStorage() {
+  try {
+    const localRaw = localStorage.getItem(STORAGE_KEY);
+    if (localRaw && localRaw !== "{}") {
+      await chromeStorageSet({
+        [STORAGE_KEY]: localRaw,
+        [STORAGE_KEY + "__json"]: planner,
+        [STORAGE_KEY + "__mirrored_at"]: new Date().toISOString()
+      });
+      return;
+    }
+
+    const data = await chromeStorageGet([STORAGE_KEY, STORAGE_KEY + "__json"]);
+    const raw = data[STORAGE_KEY];
+    const obj = data[STORAGE_KEY + "__json"];
+
+    if (raw) {
+      planner = JSON.parse(raw);
+      localStorage.setItem(STORAGE_KEY, raw);
+      render();
+      return;
+    }
+
+    if (obj && typeof obj === "object") {
+      planner = obj;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(planner));
+      render();
+    }
+  } catch (error) {
+    console.warn("Planner chrome.storage hydrate failed", error);
+  }
 }
 
 function dayData(date = currentDate) {
@@ -1020,9 +1079,11 @@ document.addEventListener("click", event => {
 document.addEventListener("DOMContentLoaded", () => {
   bindStaticEvents();
   render();
+  hydratePlannerFromChromeStorage();
 });
 
 if (document.readyState !== "loading") {
   bindStaticEvents();
   render();
+  hydratePlannerFromChromeStorage();
 }

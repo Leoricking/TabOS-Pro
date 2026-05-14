@@ -10,7 +10,7 @@
   <div class="app">
     <header>
       <h1>☁️ Tabs Manager Pro Sync Center</h1>
-      <p>同步 Planner、Weekly Review、Trading、Tabs 相關 localStorage 資料。</p>
+      <p>同步 Planner、Weekly Review、Trading、Tabs、TabOS 精選與自動分頁備份資料。</p>
       <p class="warning">GitHub Token 僅存在本機 localStorage。請使用私人電腦操作。</p>
     </header>
 
@@ -56,6 +56,8 @@
             <option value="weekly_review">只同步 Weekly Review</option>
             <option value="trading">只同步 Trading</option>
             <option value="tabs">只同步 Tabs</option>
+            <option value="curated">只同步 TabOS 精選</option>
+            <option value="auto_session">只同步自動分頁備份</option>
           </select>
         </div>
       </div>
@@ -82,12 +84,24 @@
           <p>每週復盤筆記、下週 Top 3、手動補充與匯出前暫存。</p>
         </div>
         <div>
+          <h3>Storage Hardening</h3>
+          <p>全部資料模式會匯出所有 tabs_manager_pro_* 的 chrome.storage.local key，避免 localStorage 綁定來源改變造成資料看似消失。</p>
+        </div>
+        <div>
           <h3>Trading</h3>
           <p>自選股、當沖、短線、中線、長線、回測信心指標。</p>
         </div>
         <div>
           <h3>Tabs</h3>
           <p>Tabs Manager Pro 匯出的管理頁面狀態資料。</p>
+        </div>
+        <div>
+          <h3>Curated Tabs</h3>
+          <p>右鍵加入 TabOS 精選待看的知識卡片，包含 priority、status、tags、note 與選取文字。</p>
+        </div>
+        <div>
+          <h3>Auto Session Backup</h3>
+          <p>背景自動保存的目前分頁快照，用於重開機、當機或忘記匯出 HTML 時救援。</p>
         </div>
       </div>
     </section>

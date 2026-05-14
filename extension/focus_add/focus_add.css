@@ -1,0 +1,171 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #0f1115;
+  color: #e8e8e8;
+  font-family: Arial, "Microsoft JhengHei", sans-serif;
+}
+
+.app {
+  padding: 18px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+h1,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 6px;
+  font-size: 24px;
+}
+
+p {
+  margin-bottom: 0;
+  color: #aab3c2;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.badge {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(76, 125, 255, 0.18);
+  color: #9db7ff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #d7e7ff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+input,
+textarea,
+button {
+  font-family: inherit;
+}
+
+input,
+textarea {
+  width: 100%;
+  border: 1px solid #353d4c;
+  border-radius: 12px;
+  background: #101319;
+  color: #f8fafc;
+  padding: 10px 12px;
+  outline: none;
+  font-size: 13px;
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #4c7dff;
+}
+
+.field-group {
+  padding: 12px;
+  border: 1px solid #252b36;
+  border-radius: 14px;
+  background: #101319;
+}
+
+.group-title {
+  margin-bottom: 10px;
+  color: #d7e7ff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.button-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.status-group {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+button {
+  border: none;
+  border-radius: 11px;
+  padding: 10px 12px;
+  cursor: pointer;
+  color: #ffffff;
+  background: #2d3442;
+  font-weight: 800;
+}
+
+button:hover {
+  opacity: 0.92;
+}
+
+button.active {
+  background: #4c7dff;
+}
+
+button.primary {
+  background: #4c7dff;
+}
+
+button.success {
+  background: #18a058;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.source-info,
+.status {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #2a3140;
+  background: #101319;
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.7fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.status {
+  margin-top: 12px;
+}
